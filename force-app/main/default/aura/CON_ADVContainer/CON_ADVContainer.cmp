@@ -1,0 +1,3284 @@
+<!--
+  @description       : 
+  @author            : sparra@freewayconsulting.com
+  @group             : 
+  @last modified on  : 11-06-2024
+  @last modified by  : Santiago Rodriguez
+-->
+<aura:component access="global" implements="lightning:actionOverride,force:hasRecordId,force:hasSObjectName" controller="CON_ContractsContainer_CTRL">
+    <!-- <ltng:require scripts="{!join(',', $Resource.BOOTSTRAP4 + '/js/jquery-3.2.1.slim.min.js', $Resource.BOOTSTRAP4 + '/js/popper.min.js', $Resource.BOOTSTRAP4 + '/js/bootstrap.min.js')}" styles="{!$Resource.BOOTSTRAP4 + '/css/bootstrap.min.css'}"/> -->
+    <ltng:require scripts="{!join(',', 	$Resource.CTC_BASE + '/lightning/ctcLightning.js')}" afterScriptsLoaded="{!c.init}" />
+    <aura:attribute name="cuenta" type="String" />
+    <aura:attribute name="oppId" type="String" />
+    <aura:attribute name="dataSource" type="Object" />
+    <aura:attribute name="entidadLegal" type="Object" />
+    <aura:attribute name="filialesSource" type="List" />
+    <aura:attribute name="attachmentSourceOpp" type="List" />
+    <aura:attribute name="attachmentSource" type="List" />
+    <aura:attribute name="documents" type="Object[]" />
+    <aura:attribute name="productosSource" type="List" />
+    <aura:attribute name="isOpen" type="boolean" default="false" />
+    <aura:attribute name="btnActionSave" type="boolean" default="false" />
+    <aura:attribute name="btnInactive" type="boolean" default="false" />
+    <aura:attribute name="NTT_btnInactive" type="boolean" default="false" />
+    <aura:attribute name="NTT_MoPayActivo" type="String" default="false" />
+    <aura:attribute name="NTT_IsProductMfa" type="boolean" default="false" />
+    <!-- ALTAS BE aura:attribute name="btnGenerarInactive" type="boolean" default="true" /-->
+    <aura:attribute name="btnInactiveCheck" type="boolean" default="true" />
+    <aura:attribute name="btnActionAprobar" type="boolean" default="false" />
+    <aura:attribute name="btnActionRechazar" type="boolean" default="false" />
+    <aura:attribute name="btnActionXML" type="boolean" default="false" />
+    <aura:attribute name="eLExist" type="boolean" default="false" />
+    <aura:attribute name="transferenciaElectronica" type="boolean" default="false" />
+    <aura:attribute name="amex" type="boolean" default="false" />
+    <aura:attribute name="pagoOnline" type="boolean" default="false" />
+    <aura:attribute name="STP" type="boolean" default="false" />
+    <aura:attribute name="depositoBancario" type="boolean" default="false" />
+    <aura:attribute name="otros" type="boolean" default="false" />
+    <aura:attribute name="isXML" type="boolean" default="true" />
+    <aura:attribute name="isSendXML" type="boolean" default="false" />
+    <aura:attribute name="urlPDF" type="string" />
+    <aura:attribute name="subcuentasAdicionales" type="List" />
+    <aura:attribute name="establecimientos" type="List" />
+    <aura:attribute name="tiposDeMedio" type="List" />
+    <aura:attribute name="app_edenred" type="Map" default="{render: false}" />
+    <aura:attribute name="dirEntregaCMP" type="Aura.Component" />
+    <aura:attribute name="RenegotiationProducts" type="List" />
+    <!--CEAM: 3563-->
+    <aura:attribute name="RenegotiationProductConcept" type="List" />
+    <!--CEAM: 3563-->
+    <aura:attribute name="RenegotiationConcept" type="List" />
+    <!--CEAM: 3563-->
+    <aura:attribute name="idRenegotiationProduct" type="String" />
+    <!--CEAM: 3563-->
+    <aura:attribute name="isRenegotiation" type="Boolean" />
+    <!--CEAM: 3563-->
+    <aura:attribute name="lastComments" type="List" />
+    <!--CEAM: 3563-->
+    <aura:attribute name="submitterComment" type="String" />
+    <!--CEAM: 3563-->
+    <aura:attribute name="isApprovalQuote" type="boolean" default="false" />
+    <!--CEAM: 3563-->
+    <aura:attribute name="BusinessUnit" type="String" />
+    <aura:attribute name="Canal" type="String" />
+
+    <aura:attribute name="dualTagQuantity__c" type="Integer" default="0" />
+    <aura:attribute name="physicalCardQuantity__c" type="Integer" default="0" />
+    <aura:attribute name="regularTagQuantity__c" type="Integer" default="0" />
+    <aura:attribute name="virtualCardQuantity__c" type="Integer" default="0" />
+
+    <aura:attribute name="spinAs400" type="boolean" default="false" />
+    <aura:attribute name="clientesCompletos" type="boolean" default="false" />
+
+    <aura:attribute name="motivosRechazoList" type="List" />
+    <aura:attribute name="motivosRechazoSelec" type="List" />
+    <aura:attribute name="historicoMotivosRechazo" type="List" />
+
+    <aura:attribute name="loadingPage" type="boolean" default="false" />
+    <aura:attribute name="modalErrores" type="boolean" default="false" />
+    <aura:attribute name="listaErrores" type="List" />
+
+	<aura:attribute name="convenioModificatorio" type="List" />
+    
+    <!--<aura:attribute name="titleFormato" type="String" default=""/>  6298 (Descomentar si se activa Tarjetas Virtuales)-->
+
+    <!--  -->
+    <!--DVM: INICIO, 2 Julio, Para atender el requerimiento de mostrar todos los contactos con funcion AP en la pantalla ADV -->
+    <aura:attribute name="columnas" type="List" />
+    <aura:attribute name="contactosAP" type="Contact[]" />
+    <!--DVM: FIN, 2 Julio-->
+
+    <!--CEAM:3375-->
+    <aura:attribute name="DocumentType" type="String" />
+    
+    <!--REQ AFILIADOS OPAM-->
+    <aura:attribute name="isOPAM52" type="boolean" default="false" />
+    <aura:attribute name="isOPAM62" type="boolean" default="false" />
+    <aura:attribute name="isOPAM69" type="boolean" default="false" />
+	<!--FIN REQ AFILIADOS OPAM-->
+
+	<aura:attribute name="idUniqueGeneratorData" type="Object" />
+	<aura:attribute name="RFCCode" type="String" default="" />
+
+    <!-- Integracion Mercedes-->
+    <lightning:overlayLibrary aura:id="overlayLib"/>
+    <aura:attribute name="messageComponent" type="Aura.Component" />
+    <aura:attribute name="sent2Mercedes" type="boolean" default="false" />
+	<aura:attribute name="isProductFleet" type="boolean" default="false" />
+	<aura:attribute name="isProductEcovale" type="boolean" default="false" />
+    <aura:attribute name="updateClientMercedesAvailable" type="boolean" default="false"/>
+    <!--///////////////////////////////////-->
+
+	<!-- Producto Argentina -->
+	<aura:attribute name="isProductArgentina" type="boolean" default="false" />
+  <aura:attribute name="titlePersonType" type="String"/>
+    
+  <aura:attribute name="isProduct29" type="boolean" default="false" />
+
+    <aura:handler name="hideSpin" event="c:CON_ADVContainderHideSpin" action="{!c.hideSpinGlobal}" />
+
+    <aura:registerEvent name="generatePDF" type="c:CON_GeneratePDF_EVENT" />
+    <aura:handler event="c:CON_PdfReady_EVENT" action="{!c.hidePDFSpinner}" />
+
+    <!--aura:handler name="init" value="{!this}" action="{!c.init}"/-->
+    
+    <!-- Leyenda que indica que la info fue enviada con exito a mercedes-->
+    <aura:if isTrue="{!(v.updateClientMercedesAvailable &amp;&amp; v.dataSource.Opportunity.RecordType.DeveloperName == 'RT_Renegotiation')}">
+        <aura:if isTrue="{!!v.sent2Mercedes}">
+            <div style="background-color: orange; color: white; padding: 10px; position: fixed; top: 0; left: 0; width: 100%; text-align: center; z-index: 9999;">
+                <span style="font-size: 20px;">DEBE ENVIAR A ACTUALIZACION PARA AVANZAR</span>
+            </div>
+            <aura:set attribute="else">
+                <div style="background-color: green; color: white; padding: 10px; position: fixed; top: 0; left: 0; width: 100%; text-align: center; z-index: 9999;">
+                    <span style="font-size: 20px;">LOS CLIENTES YA HAN SIDO ENVIADOS</span>
+                </div>
+            </aura:set>
+        </aura:if>
+
+        <aura:set attribute="else">
+            <aura:if isTrue="{!v.sent2Mercedes}">
+                <div style="background-color: green; color: white; padding: 10px; position: fixed; top: 0; left: 0; width: 100%; text-align: center; z-index: 9999;">
+                    <span style="font-size: 20px;">LOS CLIENTES YA HAN SIDO DADOS DE ALTA</span>
+                </div>
+            </aura:if>
+        </aura:set>
+    </aura:if>
+    
+    
+    <aura:if isTrue="{!v.loadingPage}">
+        <div style="position: fixed;z-index: 999;overflow: visible;margin: auto;top: 0;left: 0;bottom: 0;right: 0;">
+            <lightning:spinner size="large" />
+        </div>
+    </aura:if>
+    <div class="slds-p-horizontal_large slds-p-vertical_large">
+        <aura:if isTrue="{!v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation'}"> <!--6298: v.dataSource.Opportunity.RecordType.DeveloperName!='Activacion_Servicio' (Agregar si se activa Tarjetas Virtuales con un and() para ambos RT)-->
+            <aura:if isTrue="{!(
+                v.dataSource.Product2__c.AS400_integration__c==true ||
+                v.dataSource.QuoteLineItem.Product2.IDInterno__c=='30' ||
+                v.dataSource.QuoteLineItem.Product2.IDInterno__c=='31' ||
+                v.NTT_IsProductMfa)
+            }">
+                <aura:if isTrue="{!and(v.btnInactive,not(v.clientesCompletos))}">
+                    <div
+                        style="z-index:99999;position:fixed;right:0;top:0%;width:100%;height:30px;background-color:red;border-radius:10px;font-weight:bold;color:white;">
+                        <center>
+                            FALTA ALTA DE CLIENTES
+                        </center>
+                    </div>
+                </aura:if>
+                <aura:if isTrue="{!v.clientesCompletos}">
+                    <div
+                        style="z-index:99999;position:fixed;right:0;top:0%;width:100%;height:30px;background-color:green;border-radius:10px;font-weight:bold;color:white;">
+                        <center>
+                            LOS CLIENTES YA HAN SIDO DADOS DE ALTA
+                        </center>
+                    </div>
+                </aura:if>
+            </aura:if>
+        </aura:if>
+        <div>
+            <aura:if isTrue="{!v.spinAs400}">
+                <lightning:spinner size="large" />
+            </aura:if>
+        </div>
+        <div class="slds-m-horizontal_xx-large slds-p-around_x-large contract-container-border">
+            <div>
+                <strong class="slds-text-heading_large slds-align_absolute-center slds-p-bottom_large">
+                <!--6298 >> (Descomentar abajo y comentar el 'if' y 'else' si se activa Tarjetas Virtuales) 
+                    {!v.titleFormato} -->
+                     <aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+                        Formato Alta Merchant
+                            <aura:set attribute="else">
+                                Formato Alta Cliente
+                            </aura:set>
+                    </aura:if> 
+                <!-- << 6298-->
+                </strong>
+                <aura:if isTrue="{!v.dataSource.Opportunity.RecordType.DeveloperName=='Migracion'}">
+                    <div class="slds-text-heading_medium slds-align_absolute-center slds-p-bottom_large">
+                        Migración de la SubCuenta {!v.dataSource.Opportunity.Contrato_Filial__r.CodigoAS400__c}
+                    </div>
+                </aura:if>
+            </div>
+            <aura:if isTrue="{!v.dataSource.Opportunity.Pilot__c == true}">
+                <div>
+                    <strong class="slds-text-heading_large slds-align_absolute-center slds-p-bottom_large">Prueba
+                        Piloto</strong>
+                </div>
+            </aura:if>
+            <lightning:layout multipleRows="true">
+                <lightning:layoutItem flexibility="auto" size="6" class="slds-p-horizontal_medium slds-p-top_medium">
+                    <aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+                        <lightning:input label="Número Alta Merchant" name="altaCliente" type="text" step="any"
+                            value="{!v.dataSource.Opportunity.NumeroAltaCliente__c}"
+                            messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                        <aura:set attribute="else">
+                            <lightning:input label="Número Alta Cliente" name="altaCliente" type="text" step="any"
+                                value="{!v.dataSource.Opportunity.NumeroAltaCliente__c}"
+                                messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                        </aura:set>
+                    </aura:if>
+                    <aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c==false}">
+                        <lightning:input label="{!v.isProductArgentina? 'Código de ejecutivo':'Territorio Número'}" name="territorioNumero" type="text" step="any"
+                            value="{!v.dataSource.User.NumeroTerritorio__c}" messageWhenValueMissing="Campo requerido"
+                            required="true" disabled="true" />
+                    </aura:if>
+                    <lightning:input label="Oportunidad" name="Oportunidad" type="text" step="any"
+                        value="{!v.dataSource.Opportunity.Name}" messageWhenValueMissing="Campo requerido"
+                        required="true" disabled="true" />
+                </lightning:layoutItem>
+                <lightning:layoutItem flexibility="auto" size="6" class="slds-p-horizontal_medium slds-p-top_medium">
+                    <lightning:input label="Nombre Ejecutivo" name="nombreEjecutivo" type="text" step="any"
+                        value="{!v.dataSource.Opportunity.Owner.Name}" messageWhenValueMissing="Campo requerido"
+                        required="true" disabled="true" />
+                    <lightning:input label="Gestor del propietario de la oportunidad" name="gestorOportunidad"
+                        type="text" step="any" value="{!v.dataSource.User.Manager.Name}"
+                        messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                    <aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c==false &amp;&amp; !v.isProductArgentina}">
+                        <lightning:input label="Venta Trade Marketing" name="VentaTradeMarketing" type="Text" step="any"
+                            value="{!v.dataSource.Opportunity.VentaTradeMarketing_PL__c}"
+                            messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                    </aura:if>
+                </lightning:layoutItem>
+            </lightning:layout>
+            
+            <aura:if isTrue="{! and(v.dataSource.Opportunity.RecordType.DeveloperName != 'RT_Renegotiation',!v.dataSource.Product2__c.IsAffiliate__c ) }"> <!--6298: &amp;&amp; v.dataSource.Opportunity.RecordType.DeveloperName != 'Activacion_Servicio' (Agregar si se activa Tarjetas Virtuales)-->
+                <!--CEAM: 3563-->
+                <div class="separador" id="separadorEL"></div>
+                <div class="slds-section slds-is-open slds-p-top_medium" id="sectionEL">
+                    <h3 class="slds-section__title slds-theme_shade">
+                        <span class="slds-truncate slds-p-horizontal_small tableFontSize" title="funcionalidades">
+                            Entidad Legal / Filiales
+                        </span>
+                    </h3>
+                </div>
+                <lightning:layout>
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer tableFontSize" id="tableEL" style="text-align:center;">
+                        <thead>
+                            <tr class="slds-text-title_caps tableFontSize">
+                                <!--aura:if isTrue="{!v.btnInactiveCheck}">
+                                    <th scope="col" name="hideCol" style="text-align:center;">
+                                        <div class="slds-truncate"></div>
+                                    </th>
+                                </aura:if Modificado por Carlos Cruz-->
+                                <th scope="col" style="text-align:center;">
+                                    <center>
+                                        <div class="slds-truncate">Tipo</div>
+                                    </center>
+                                </th>
+                                <th scope="col" style="text-align:center;">
+                                    <div class="slds-truncate" title="Tipo">Tipo Persona</div>
+                                </th>
+                                <th scope="col" style="text-align:center;">
+                                    <center>
+                                        <div class="slds-truncate" title="Nombre">Razón Social</div>
+                                    </center>
+                                </th>
+                                <th scope="col" style="text-align:center;">
+                                    <div class="slds-truncate" title="RFC">{!v.isProductArgentina? 'CUIT':'RFC'}</div>
+                                </th>
+                                <th scope="col" style="text-align:center;">
+                                    <div class="slds-truncate" title="País de origen">País de origen</div>
+                                </th>
+                                <th scope="col" style="text-align:center;">
+                                    <div class="slds-truncate" title="RFC">Administrador de Plataforma</div>
+                                </th>
+                                <th scope="col" style="text-align:center;">
+                                    <div class="slds-truncate" title="RFC">Email</div>
+                                </th>
+                               
+                                <th scope="col" style="text-align:center;">
+									<aura:if isTrue="{!v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC'}">
+										<div class="slds-truncate" title="Phantom ID">Código de Cliente</div>
+										<aura:set attribute="else">
+											<aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='33' || v.dataSource.QuoteLineItem.Product2.IDInterno__c=='60' || v.NTT_IsProductMfa}">
+												<div class="slds-truncate" title="Phantom ID">ID cliente Mercedes</div>
+                        <aura:set attribute="else">
+                          <!-- NTT - Inicia - Genera cliente MoPay-->
+                          <aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='29-P'}">
+                            <div class="slds-truncate" title="UniqueId">Unique Id</div>
+                          </aura:if>
+                        </aura:set>
+										    <aura:set attribute="else">
+													<div class="slds-truncate" title="AS400">Cód. As400/Id. OPAM</div>
+												</aura:set>
+											</aura:if>
+                                            <!-- NTT - Termina - Genera cliente MoPay-->
+										</aura:set>
+									</aura:if>
+                                    
+                                </th>
+                                <!-- NTT - Inicia - Genera cliente MoPay-->
+                                <aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='29-P'}">
+                                  <th scope="col" style="text-align:center;">
+                                    <div class="slds-truncate" title="Id MoPay">Id Middle Office Pay</div>
+                                  </th>
+                                </aura:if>
+                                <!-- NTT - Termina - Genera cliente MoPay-->
+                            </tr>
+                        </thead>
+                        <aura:if isTrue="{!v.dataSource.Product2__c.isPhantomIntegration__c}">
+                            <tbody>
+                                <aura:if isTrue="{!v.eLExist}">
+                                    <tr>
+                                        <!--aura:if isTrue="{!v.btnInactiveCheck}">
+                                            <th scope="row" name="hideCol" style="text-align:center;">
+                                                <center>
+                                                    <input type="radio" id="{!v.entidadLegal.Id}" name="update"
+                                                        onclick="{!c.updateData}" />
+                                                </center>
+                                            </th>
+                                        </aura:if Modificado por Carlos Cruz -->
+                                        <th scope="row" style="text-align:center;">
+                                            <center>EL</center>
+                                        </th>
+                                        <td data-label="Account Name" style="text-align:center;">
+                                            <center>
+                                                <div class="slds-truncate" title="{!v.entidadLegal.RecordType}">
+                                                    {!v.entidadLegal.RecordType}</div>
+                                            </center>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div class="slds-truncate" title="{!v.entidadLegal.RazonSocial__c}">
+                                                {!v.entidadLegal.RazonSocial__c}</div>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div class="slds-truncate" title="{!v.entidadLegal.Name}">
+                                                {!v.entidadLegal.Name}
+                                            </div>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div class="slds-truncate" title="{!v.entidadLegal.CountryOrigin__c}">
+                                                {!v.entidadLegal.CountryOrigin__c}</div>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div class="slds-truncate"
+                                                title="{!v.dataSource.Opportunity.Contacto__r.Name}">
+                                                {!v.dataSource.Opportunity.Contacto__r.Name}</div>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div class="slds-truncate"
+                                                title="{!v.dataSource.Opportunity.Contacto__r.Email}">
+                                                {!v.dataSource.Opportunity.Contacto__r.Email}</div>
+                                        </td>
+                                        <!--TODO: change here-->
+                                        <td>
+                                            <lightning:input label="AS400" type="text" step="any"
+                                                value="{!v.dataSource.Contrato2__c.CodigoAS400__c}"
+                                                messageWhenValueMissing="Campo requerido" required="true"  disabled="{!v.btnInactive}"/>
+                                                <!-- disabled="{!v.entidadLegal.Disabled}" /Modificado Por Carlos Cruz-->
+                                        </td>
+                                    </tr>
+                                    <aura:iteration items="{!v.subcuentasAdicionales}" var="item">
+                                        <aura:if isTrue="{!v.entidadLegal.Name == item.RFC__c}">
+                                            <tr>
+                                                <th scope="row" name="hideCol" style="text-align:center;"></th>
+                                                <td></td>
+                                                <td></td>
+                                                <td style="text-align:center;">
+                                                    <div class="slds-truncate"
+                                                        title="{!item.PlatformAdministrator__r.Name}">
+                                                        <div class="slds-truncate"
+                                                            title="{!item.PlatformAdministrator__r.Name}">
+                                                            <lightning:input name="input5" disabled="true"
+                                                                value="{!item.PlatformAdministrator__r.Name}"
+                                                                label="Administrador de plataforma" />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td style="text-align:center;">
+                                                    <div class="slds-truncate" title="{!item.Distintivo__c}">
+                                                        <lightning:input name="input5" disabled="true"
+                                                            value="{!item.Distintivo__c}" label="Distintivo" />
+                                                    </div>
+                                                </td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td>
+													<aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='33' || v.dataSource.QuoteLineItem.Product2.IDInterno__c=='60' || v.NTT_IsProductMfa}">
+														<lightning:input disabled="true" 
+															type="text"
+															label="ID cliente Mercedes" 
+															value="{!item.CodigoAS400__c}"
+															messageWhenValueMissing="Campo requerido" 
+															required="true" 
+														/>
+													
+														<aura:set attribute="else">
+															<lightning:input disabled="{!v.btnInactive}" 
+																type="text"
+																label="{!v.dataSource.Product2__c.ProductCode == 'YC' || v.dataSource.Product2__c.ProductCode == 'XC' ? 'Código Cliente' : 'Código AS400'}"
+																value="{!item.CodigoAS400__c}"
+																messageWhenValueMissing="Campo requerido" 
+																required="true" 
+															/>
+														</aura:set>
+													</aura:if>
+                                                </td>
+                                            </tr>
+                                            <aura:iteration items="{!item.centrosCostos}" var="cc">
+                                                <tr>
+                                                    <th scope="row" name="hideCol" style="text-align:center;"></th>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td style="text-align:center;">
+                                                        <div class="slds-truncate" title="{!cc.Grouper__r.Name}">
+                                                            <lightning:input name="inputG" disabled="true"
+                                                                             value="{!cc.Grouper__r.Name}" label="Grouper" />
+                                                        </div>
+                                                    </td>
+                                                    
+                                                    <td style="text-align:center;">
+                                                        
+                                                        <div class="slds-truncate" title="{!cc.Name}">
+                                                            <lightning:input name="inputCC" disabled="true"
+                                                                             value="{!cc.Name}" label="Centro de Costos" />
+                                                            
+                                                        </div>
+                                                    
+                                                    </td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                </tr>
+                                            </aura:iteration>
+                                           
+                                        </aura:if>
+                                    </aura:iteration>
+                                </aura:if>
+                                <aura:iteration items="{!v.filialesSource}" var="filial" indexVar="indexF">
+                                    <tr>
+                                        <!--aura:if isTrue="{!v.btnInactiveCheck}">
+                                            <th scope="row" name="hideCol" style="text-align:center;">
+                                                <input type="radio" id="{!filial.Entidad_Cuenta__r.EntidadLegal__r.Id}"
+                                                    name="update" onclick="{!c.updateData}" />
+                                            </th>
+                                        </aura:if Modificado por Carlos Cruz-->
+                                        <td scope="row" style="text-align:center;">
+                                            F
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div class="slds-truncate"
+                                                title="{!filial.Entidad_Cuenta__r.EntidadLegal__r.RecordType.Name}">
+                                                {!filial.Entidad_Cuenta__r.EntidadLegal__r.RecordType.Name}</div>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div class="slds-truncate"
+                                                title="{!filial.Entidad_Cuenta__r.EntidadLegal__r.RazonSocial__c}">
+                                                {!filial.Entidad_Cuenta__r.EntidadLegal__r.RazonSocial__c}</div>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div class="slds-truncate"
+                                                title="{!filial.Entidad_Cuenta__r.EntidadLegal__r.Name}">
+                                                {!filial.Entidad_Cuenta__r.EntidadLegal__r.Name}</div>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div class="slds-truncate"
+                                                title="{!filial.Entidad_Cuenta__r.EntidadLegal__r.CountryOrigin__c}">
+                                                {!filial.Entidad_Cuenta__r.EntidadLegal__r.CountryOrigin__c}</div>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div class="slds-truncate" title="{!filial.PlatformAdministrator__r.Name}">
+                                                {!filial.PlatformAdministrator__r.Name}</div>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div class="slds-truncate" title="{!filial.PlatformAdministrator__r.Email}">
+                                                {!filial.PlatformAdministrator__r.Email}</div>
+                                        </td>
+                                        <td></td>
+                                        <td>
+                                            <lightning:input label="AS400" type="text" step="any"
+                                                value="{!filial.CodigoAS400__c}"
+                                                messageWhenValueMissing="Campo requerido" required="true" disabled="{!v.btnInactive}"/>
+                                               <!-- disabled="{!filial.Disabled}" /Modificado por Carlos Cruz-->
+                                        </td>
+                                    </tr>
+
+                                    <aura:iteration items="{!v.subcuentasAdicionales}" var="item">
+                                        <aura:if isTrue="{!filial.RFC__c == item.RFC__c}">
+                                            <tr>
+                                                <th scope="row" name="hideCol" style="text-align:center;"></th>
+                                                <td></td>
+                                                <td></td>
+                                                <td style="text-align:center;">
+                                                    <div class="slds-truncate"
+                                                        title="{!item.PlatformAdministrator__r.Name}">
+                                                        <div class="slds-truncate"
+                                                            title="{!item.PlatformAdministrator__r.Name}">
+                                                            <lightning:input name="input5" disabled="true"
+                                                                value="{!item.PlatformAdministrator__r.Name}"
+                                                                label="Administrador de plataforma" />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td style="text-align:center;">
+                                                    <div class="slds-truncate" title="{!item.Distintivo__c}">
+                                                        <lightning:input name="input5" disabled="true"
+                                                            value="{!item.Distintivo__c}" label="Distintivo" />
+                                                    </div>
+                                                </td>
+                                                <td></td>
+                                                <td></td>
+                                                <td>
+                                                    <lightning:input label="AS400" type="text" step="any"
+                                                        value="{!filial.CodigoAS400__c}"
+                                                        messageWhenValueMissing="Campo requerido" required="true"
+                                                        disabled="{!filial.Disabled}" />
+                                                </td>
+                                            </tr>
+                                        </aura:if>
+                                    </aura:iteration>
+
+                                    <!--                                     <aura:iteration items="{!v.subcuentasAdicionales}" var="item">
+                                        <aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+                                            <td>
+                                                <div class="slds-truncate">{!item.Name}</div>
+                                            </td>
+                                            <td>
+                                                <div class="slds-truncate">{!item.RFC__c}</div>
+                                            </td>
+                                            <td>
+                                                <div class="slds-truncate">{!item.Razon_Social__c}</div>
+                                            </td>
+                                            <td>
+                                                <div class="slds-truncate">{!item.Distintivo__c}</div>
+                                            </td>
+                                            <td>
+                                                <div class="slds-truncate">
+                                                    {!item.PlatformAdministrator__r.Name}
+                                                </div>
+                                            </td>
+                                            <aura:if isTrue="{!v.dataSource.Product2__c.Productos_secundarios__r}">
+                                                <th scope="col">
+                                                    <div class="slds-truncate">{!item.Texto_libre__c}</div>
+                                                </th>
+                                            </aura:if>
+                                            <td>
+                                                <lightning:input disabled="{!v.btnInactive}" type="text" label=""
+                                                    value="{!item.CodigoAS400__c}"
+                                                    messageWhenValueMissing="Campo requerido" required="true" />
+                                            </td>
+                                            <aura:set attribute="else">
+                                                <div class="slds-grid slds-gutters">
+                                                    <div class="slds-col">
+                                                        <div class="slds-truncate">{!item.Razon_Social__c}</div>
+                                                    </div>
+                                                    <div class="slds-col">
+                                                        <div class="slds-truncate">{!item.RFC__c}</div>
+                                                    </div>
+                                                    <div class="slds-col">
+                                                        <div class="slds-truncate">{!item.Distintivo__c}</div>
+                                                    </div>
+                                                    <div class="slds-col">
+                                                        <div class="slds-truncate">
+                                                            {!item.PlatformAdministrator__r.Name}</div>
+                                                    </div>
+                                                    <div class="slds-col">
+                                                        <div class="slds-truncate">
+                                                            {!item.PlatformAdministrator__r.Email}</div>
+                                                    </div>
+                                                    <div class="slds-col">
+                                                        <lightning:input disabled="{!v.btnInactive}" type="text"
+                                                            label="Código AS400" value="{!item.CodigoAS400__c}"
+                                                            messageWhenValueMissing="Campo requerido" required="true" />
+                                                    </div>
+                                                </div>
+                                            </aura:set>
+                                        </aura:if>
+                                    </aura:iteration> -->
+                                </aura:iteration>
+								<aura:if isTrue="{!(
+                                    v.dataSource.Product2__c.AS400_integration__c ||
+									v.dataSource.QuoteLineItem.Product2.IDInterno__c=='33' ||
+									v.dataSource.QuoteLineItem.Product2.IDInterno__c=='30' ||
+									v.dataSource.QuoteLineItem.Product2.IDInterno__c=='60' ||
+									v.dataSource.QuoteLineItem.Product2.IDInterno__c=='31' ||
+                                    v.NTT_IsProductMfa
+								)}">
+                                    <tr>
+                                        <td colspan="8">
+                                            <center>
+                                                <!-- ALTAS BE aura:if isTrue="{!!v.clientesCompletos}">
+                                                    <lightning:button label="Generar Clientes" variant="success"
+                                                        disabled="{!v.btnGenerarInactive}"
+                                                        onclick="{!c.generarClientes}" />
+                                                </aura:if-->
+                                                <aura:if isTrue="{!!v.clientesCompletos}">
+                                                    <lightning:button label="Generar Clientes" variant="success"
+                                                        disabled="{!not(v.btnInactive)}"
+                                                        onclick="{!c.generarClientes}" />
+                                                </aura:if>
+                                            </center>
+                                        </td>
+                                    </tr>
+                                </aura:if>
+                            </tbody>
+							<!--Aqui entra producto YC / XC (Argentina)-->
+                            <aura:set attribute="else">
+                                <tbody>
+                                    <aura:if isTrue="{!v.eLExist}">
+                                        <tr>
+                                            <!--aura:if isTrue="{!v.btnInactiveCheck}">
+                                                <th scope="row" name="hideCol" style="text-align:center;">
+                                                    <center>
+                                                        <input type="radio" id="{!v.entidadLegal.Id}" name="update"
+                                                            onclick="{!c.updateData}" />
+                                                    </center>
+                                                </th>
+                                            </aura:if Modificado por Carlos Cruz-->
+                                            <th scope="row" style="text-align:center;">
+                                                <center>EL</center>
+                                            </th>
+                                            <td data-label="Account Name" style="text-align:center;">
+                                                <center>
+                                                    <div class="slds-truncate" title="{!v.titlePersonType}">
+                                                        {!v.titlePersonType}</div>
+                                                </center>
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <div class="slds-truncate" title="{!v.entidadLegal.RazonSocial__c}">
+                                                    {!v.entidadLegal.RazonSocial__c}</div>
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <div class="slds-truncate" title="{!v.entidadLegal.Name}">
+                                                    {!v.entidadLegal.Name}
+                                                </div>
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <div class="slds-truncate" title="{!v.entidadLegal.CountryOrigin__c}">
+                                                    {!v.entidadLegal.CountryOrigin__c}</div>
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <div class="slds-truncate"
+                                                    title="{!v.dataSource.Opportunity.Contacto__r.Name}">
+                                                    {!v.dataSource.Opportunity.Contacto__r.Name}</div>
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <div class="slds-truncate"
+                                                    title="{!v.dataSource.Opportunity.Contacto__r.Email}">
+                                                    {!v.dataSource.Opportunity.Contacto__r.Email}</div>
+                                            </td>
+                                            <td>
+												<aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='33' || v.dataSource.QuoteLineItem.Product2.IDInterno__c=='60' || v.NTT_IsProductMfa}">
+														<lightning:input label="ID cliente Mercedes" 
+															type="text" 
+															step="any"
+															value="{!v.dataSource.Contrato2__c.CodigoAS400__c}"
+															messageWhenValueMissing="Campo requerido" 
+															required="true" 
+															disabled="true"
+														/>
+													
+													<aura:set attribute="else">
+                            <!-- NTT - Inicia - Genera cliente MoPay-->
+                            <aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='29-P'}">
+                              <lightning:input label="UniqueId" 
+                              type="text" 
+                              step="any"
+                              value="{!v.dataSource.Contrato2__c.CodigoAS400__c}"
+                              messageWhenValueMissing="Campo requerido" 
+                              required="true" 
+                              disabled="{!v.btnInactive}"
+                              />
+                            <!-- NTT - Termina - Genera cliente MoPay-->
+                            <aura:set attribute="else">
+                              <lightning:input label="{!v.dataSource.Product2__c.ProductCode == 'YC' || v.dataSource.Product2__c.ProductCode == 'XC' ? 'Código Cliente' : 'AS400'}" 
+															type="text" 
+															step="any"
+															value="{!v.dataSource.Contrato2__c.CodigoAS400__c}"
+															messageWhenValueMissing="Campo requerido" 
+															required="true" 
+															disabled="{!v.btnInactive}"
+														/>
+                          <!--disabled="{!v.entidadLegal.Disabled}" /Modificado por Carlos Cruz-->                                              
+                            </aura:set>
+                            </aura:if>
+															
+                                                            </aura:set>
+                                                        </aura:if>
+                                                
+                                            </td>
+                                            
+                                            <aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='29-P'}">
+                                              <td>
+                                                <lightning:input label="MoPay" type="text" step="any"
+                                                value="{!v.dataSource.Contrato2__c.NTT_Id_Middle_Office__c}" messageWhenValueMissing="Campo requerido" required="true" disabled="{!v.NTT_btnInactive}"/>
+                                              </td>
+                                            </aura:if>
+                                        </tr>
+                                    </aura:if>
+                                    <aura:iteration items="{!v.filialesSource}" var="filial" indexVar="indexF">
+                                        <tr>
+                                            <!--aura:if isTrue="{!v.btnInactiveCheck}">
+                                                <th scope="row" name="hideCol" style="text-align:center;">
+                                                    <input type="radio"
+                                                        id="{!filial.Entidad_Cuenta__r.EntidadLegal__r.Id}"
+                                                        name="update" onclick="{!c.updateData}" />
+                                                </th>
+                                            </aura:if  Modificado Por Carlos Cruz -->
+                                            <td scope="row" style="text-align:center;">
+                                                F
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <div class="slds-truncate"
+                                                    title="{!filial.Entidad_Cuenta__r.EntidadLegal__r.RecordType.Name}">
+                                                    {!filial.Entidad_Cuenta__r.EntidadLegal__r.RecordType.Name}</div>
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <div class="slds-truncate"
+                                                    title="{!filial.Entidad_Cuenta__r.EntidadLegal__r.RazonSocial__c}">
+                                                    {!filial.Entidad_Cuenta__r.EntidadLegal__r.RazonSocial__c}</div>
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <div class="slds-truncate"
+                                                    title="{!filial.Entidad_Cuenta__r.EntidadLegal__r.Name}">
+                                                    {!filial.Entidad_Cuenta__r.EntidadLegal__r.Name}</div>
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <div class="slds-truncate"
+                                                    title="{!filial.Entidad_Cuenta__r.EntidadLegal__r.Name}">
+                                                    {!filial.Entidad_Cuenta__r.EntidadLegal__r.CountryOrigin__c}</div>
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <div class="slds-truncate"
+                                                    title="{!filial.PlatformAdministrator__r.Name}">
+                                                    {!filial.PlatformAdministrator__r.Name}</div>
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <div class="slds-truncate"
+                                                    title="{!filial.PlatformAdministrator__r.Email}">
+                                                    {!filial.PlatformAdministrator__r.Email}</div>
+                                            </td>
+                                            <td>
+                                                <aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='33' || v.dataSource.QuoteLineItem.Product2.IDInterno__c=='60' || v.NTT_IsProductMfa}">
+														<lightning:input label="ID cliente Mercedes" 
+															type="text" 
+															step="any"
+															value="{!filial.CodigoAS400__c}"
+															messageWhenValueMissing="Campo requerido" 
+															required="true" 
+															disabled="true"
+														/>
+													
+													<aura:set attribute="else">
+														<lightning:input label="{!v.dataSource.Product2__c.ProductCode == 'YC' || v.dataSource.Product2__c.ProductCode == 'XC' ? 'Código Cliente' : 'AS400'}" 
+															type="text" 
+															step="any"
+															value="{!filial.CodigoAS400__c}"
+															messageWhenValueMissing="Campo requerido" 
+															required="true" 
+															disabled="{!v.btnInactive}"
+														/>
+															<!--disabled="{!v.entidadLegal.Disabled}" /Modificado por Carlos Cruz-->
+													</aura:set>
+												</aura:if>
+                                            </td>
+                                        </tr>
+                                    </aura:iteration>
+									<aura:if isTrue="{!(
+                                        v.dataSource.Product2__c.AS400_integration__c || 
+                                        v.dataSource.QuoteLineItem.Product2.IDInterno__c=='33' ||
+										v.dataSource.QuoteLineItem.Product2.IDInterno__c=='30' ||
+										v.dataSource.QuoteLineItem.Product2.IDInterno__c=='60' ||
+										v.dataSource.QuoteLineItem.Product2.IDInterno__c=='31' ||
+                                        v.NTT_IsProductMfa
+									)}">
+                                        <tr>
+                                            <td colspan="8">
+                                                <div aura:id="messageContainer">
+                                                    {!v.messageComponent}
+                                                </div>
+                                                <center>
+                                                    <!-- ALTAS BE aura:if isTrue="{!!v.clientesCompletos}">
+                                                        <lightning:button label="Generar Clientes" variant="success"
+                                                            disabled="{!v.btnGenerarInactive}"
+                                                            onclick="{!c.generarClientes}" />
+                                                    </aura:if-->
+
+                                                    <aura:if isTrue="{!AND(not(v.clientesCompletos), (v.isProductFleet || v.isProductEcovale || v.NTT_IsProductMfa))}">
+                                                        <lightning:button label="Generar Clientes" variant="success"
+                                                        disabled="{!(!v.btnInactive || v.sent2Mercedes)}"
+                                                        onclick="{!c.generarClientes}" />
+                                                        <aura:set attribute="else">
+                                                            <lightning:button label="Generar Clientes" variant="success"
+                                                                disabled="{(!not(v.btnInactive))}"
+																aura:id="disablebuttonid"  
+                                                                onclick="{!c.generarClientes}" />
+                                                        </aura:set>
+                                                    </aura:if> 
+                                                    
+                                                </center>
+                                            </td>
+                                        </tr>
+                                        <!-- NTT - Inicia - Genera cliente MoPay-->
+                                        <aura:set attribute="else">
+                                        	<tr>
+												<td colspan="{!IF(v.dataSource.QuoteLineItem.Product2.IDInterno__c == '29-P', '9','8')}">
+													<div aura:id="messageContainer">
+														{!v.messageComponent}
+													</div>
+													<center>
+                                                        <aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c == '29-P'}">
+                                                        	<aura:if isTrue="{!not(v.clientesCompletos)}">
+                                                        	<lightning:button label="Generar Clientes" variant="success"
+                                                        	disabled="{!v.NTT_btnInactive}"
+                                                        	onclick="{!c.gestionaMoPayActivo}" />
+                                                        	<aura:set attribute="else">
+                                                            	<lightning:button label="Generar Clientes" variant="success"
+                                                                	disabled="{!v.NTT_btnInactive}"
+																	aura:id="disablebuttonid"  
+                                                                	onclick="{!c.gestionaMoPayActivo}" />
+                                                        		</aura:set>
+                                                    		</aura:if>
+                                                    	</aura:if>
+                                                	</center>
+                                            	</td>
+                                        	</tr>
+                                        </aura:set>
+                                        <!-- NTT - Termina - Genera cliente MoPay-->
+									</aura:if>
+                                </tbody>
+                            </aura:set>
+                        </aura:if>
+                    </table>
+                </lightning:layout>
+            </aura:if>
+            <aura:if isTrue="{! and(v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation', v.dataSource.Product2__c.IsAffiliate__c ) }"> <!--6298: &amp;&amp; v.dataSource.Opportunity.RecordType.DeveloperName!='Activacion_Servicio' (Agregar si se activa Tarjetas Virtuales)-->
+                <div class="separador" id="separadorEL"></div>
+                <div class="slds-section slds-is-open slds-p-top_medium" id="sectionEL">
+                    <h3 class="slds-section__title slds-theme_shade">
+                        <span class="slds-truncate slds-p-horizontal_small tableFontSize" title="funcionalidades">
+                            Entidad Legal
+                        </span>
+                    </h3>
+                </div>
+                <lightning:layout>
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer tableFontSize" id="tableEL"
+                        style="text-align:center;">
+                        <thead>
+                            <tr class="slds-text-title_caps tableFontSize">
+                                <th scope="col" style="text-align:center;">
+                                    <div class="slds-truncate">Tipo</div>
+                                </th>
+                                <th scope="col" style="text-align:center;">
+                                    <div class="slds-truncate">Razón Social</div>
+                                </th>
+                                <th scope="col" style="text-align:center;">
+                                    <div class="slds-truncate">RFC</div>
+                                </th>
+                                <th scope="col" style="text-align:center;">
+                                    <div class="slds-truncate">Tipo Persona</div>
+                                </th>
+                                <th scope="col" style="text-align:center;">
+                                    <div class="slds-truncate">Representante legal</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <aura:if isTrue="{!v.eLExist}">
+                                <tr>
+                                    <th style="text-align:center;">
+                                        <center>EL</center>
+                                    </th>
+                                    <td style="text-align:center;">
+                                        <div class="slds-truncate">{!v.entidadLegal.RazonSocial__c}</div>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <div class="slds-truncate">{!v.entidadLegal.Name}</div>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <center>
+                                            <div class="slds-truncate">{!v.entidadLegal.RecordType}</div>
+                                        </center>
+                                    </td>
+                                    <td>
+                                        <center>
+                                            <div class="slds-truncate">{!v.entidadLegal.Contacto__c}</div>
+                                        </center>
+                                    </td>
+                                </tr>
+                            </aura:if>
+                            <aura:iteration items="{!v.filialesSource}" var="filial" indexVar="indexF">
+                                <tr>
+                                    <td scope="row" style="text-align:center;">
+                                        F
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <div class="slds-truncate">{!filial.Entidad_Cuenta__r.EntidadLegal__r.RazonSocial__c}</div>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <div class="slds-truncate">{!filial.Entidad_Cuenta__r.EntidadLegal__r.Name}</div>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <div class="slds-truncate">{!filial.Entidad_Cuenta__r.EntidadLegal__r.RecordType.Name}</div>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <div class="slds-truncate">{!filial.Contacto_Representante_Legal__c}</div>
+                                    </td>
+                                </tr>
+                            </aura:iteration>
+                            <aura:if isTrue="{!(
+                                v.dataSource.Product2__c.AS400_integration__c==true || 
+                                v.dataSource.QuoteLineItem.Product2.IDInterno__c=='30'||
+                                v.dataSource.QuoteLineItem.Product2.IDInterno__c=='31' ||
+                                v.NTT_IsProductMfa)
+                            }">
+                                <tr>
+                                    <td colspan="8">
+                                        <center>
+                                            <aura:if isTrue="{!!v.clientesCompletos}">
+                                                <!-- ALTAS BE lightning:button label="Generar Clientes" variant="success"
+                                                    disabled="{!v.btnGenerarInactive}" onclick="{!c.generarClientes}" /-->
+                                            
+                                                <lightning:button label="Generar Clientes" variant="success"
+                                                    disabled="{!not(v.btnInactive)}" onclick="{!c.generarClientes}" />
+                                            
+                                            </aura:if>
+                                        </center>
+                                    </td>
+                                </tr>
+                            </aura:if>
+                        </tbody>
+                    </table>
+                </lightning:layout>
+            </aura:if>
+            <aura:if isTrue="{!and(v.dataSource.Product2__c.SendToSIGLO__c, v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation')}">
+                <!--CEAM:3563-->
+                <div class="slds-section slds-is-open slds-p-top_medium" id="sectionEL">
+                    <h3 class="slds-section__title slds-theme_shade">
+                        <span class="slds-truncate slds-p-horizontal_small tableFontSize" title="funcionalidades">
+                            Detalle de la Entidad Legal
+                        </span>
+                    </h3>
+                </div>
+                <div class="slds-grid slds-gutters">
+                    <div class="slds-col slds-m-left_medium slds-m-right_medium">
+                        <aura:if isTrue="{!v.entidadLegal.PersonType__c == 'Persona Moral - Mexicana'}">
+                            <div>
+                                <div style="width:100%;display:inline-block;vertical-align:top;"
+                                    class="slds-p-top_x-small">
+                                    <lightning:input disabled="true" type="text" name="input1SIGLO"
+                                        label="Número de firma electrónica avanzada" value="{!v.entidadLegal.FEA__c}"
+                                        required="true" maxlength="25" minlength="1" pattern="[0-9]{1,25}"
+                                        messageWhenPatternMismatch="Favor de incluir sólo números." />
+                                </div>
+                            </div>
+                        </aura:if>
+                        <aura:if
+                            isTrue="{!or(
+                                v.entidadLegal.PersonType__c == 'Persona Moral - Mexicana',
+                                v.entidadLegal.PersonType__c == 'Persona Moral - Extranjera')
+                            }">
+                            <div>
+                                <div style="width:100%;display:inline-block;vertical-align:top;"
+                                    class="slds-p-top_x-small">
+                                    <lightning:input disabled="true" type="date" name="input2SIGLO"
+                                        label="Fecha de constitución de la empresa"
+                                        value="{!v.entidadLegal.DeedDate__c}" required="true" />
+                                </div>
+                            </div>
+                        </aura:if>
+                        <div>
+                            <div style="width:100%;display:inline-block;vertical-align:top;" class="slds-p-top_x-small">
+                                <lightning:input disabled="true" type="text" name="input3SIGLO" label="Número de cuenta"
+                                    value="{!v.entidadLegal.AccountNumber__c}" required="true" maxlength="25"
+                                    minlength="1" pattern="[0-9]{1,25}"
+                                    messageWhenPatternMismatch="Favor de incluir sólo números." />
+                            </div>
+                        </div>
+                        <div>
+                            <div style="width:100%;display:inline-block;vertical-align:top;" class="slds-p-top_x-small">
+                                <lightning:input disabled="true" type="text" name="input4SIGLO"
+                                    label="Número de la clabe" value="{!v.entidadLegal.KeyNumber__c}" required="true"
+                                    maxlength="25" minlength="1" pattern="[0-9]{1,25}"
+                                    messageWhenPatternMismatch="Favor de incluir sólo números." />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-col">
+                        <div>
+                            <div style="width:100%;display:inline-block;vertical-align:top;" class="slds-p-top_x-small">
+                                <lightning:input disabled="true" type="text" name="input5SIGLO" label="Geolocalización"
+                                    value="{!v.entidadLegal.Geolocation__c}" required="true" maxlength="40"
+                                    minlength="1" />
+                            </div>
+                        </div>
+                        <aura:if
+                            isTrue="{!or(
+                                v.entidadLegal.PersonType__c == 'Persona Moral - Mexicana',
+                                v.entidadLegal.PersonType__c == 'Persona Moral - Extranjera')
+                            }">
+                            <div>
+                                <div style="width:100%;display:inline-block;vertical-align:top;"
+                                    class="slds-p-top_x-small">
+                                    <lightning:input disabled="true" type="text" name="input6SIGLO"
+                                        label="Giro, Actividad o Objeto Social"
+                                        value="{!v.entidadLegal.EconomicActivity__c}" required="true" maxlength="25"
+                                        minlength="1" pattern="[0-9]{1,25}"
+                                        messageWhenPatternMismatch="Favor de incluir sólo números." />
+                                </div>
+                            </div>
+                        </aura:if>
+                        <aura:if isTrue="{!v.entidadLegal.PersonType__c == 'Persona Moral - Mexicana'}">
+                            <div>
+                                <div style="width:100%;display:inline-block;vertical-align:top;"
+                                    class="slds-p-top_x-small">
+                                    <lightning:input disabled="true" type="text" name="input7SIGLO"
+                                        label="Número de escritura de la persona moral"
+                                        value="{!v.entidadLegal.DeedNumber__c}" required="true" maxlength="30"
+                                        minlength="1" />
+                                </div>
+                            </div>
+                        </aura:if>
+                    </div>
+                </div>
+            </aura:if>
+            <aura:if isTrue="{!v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation'}"> <!--6298: ,v.dataSource.Opportunity.RecordType.DeveloperName!='Activacion_Servicio' (Agregar si se activa Tarjetas Virtuales con un and() para ambos RT)-->
+                <!--CEAM:3563-->
+                <div class="separador" id="separadorEL"></div>
+                <div class="slds-section slds-is-open slds-p-top_medium" id="sectionEL">
+                    <h3 class="slds-section__title slds-theme_shade">
+                        <span class="slds-truncate slds-p-horizontal_small tableFontSize" title="funcionalidades">
+                            <aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+                                Afiliados
+                            </aura:if>
+                            <aura:if isTrue="{!and(
+                                !v.dataSource.Product2__c.IsAffiliate__c, 
+                                !v.dataSource.Product2__c.isPhantomIntegration__c)
+                            }">
+                                Subcuentas adicionales
+                            </aura:if>
+                        </span>
+                    </h3>
+                </div>
+                <lightning:layout>
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer tableFontSize">
+                        <tr>
+                            <aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+                                <th scope="col">
+                                    <div class="slds-truncate">Nombre</div>
+                                </th>
+                                <th scope="col">
+                                    <div class="slds-truncate">RFC</div>
+                                </th>
+                                <th scope="col">
+                                    <div class="slds-truncate">Razón Social</div>
+                                </th>
+                                <th scope="col">
+                                    <div class="slds-truncate">Distintivo</div>
+                                </th>
+                                <th scope="col">
+                                    <div class="slds-truncate">Interlocutor</div>
+                                </th>
+                                <!--<aura:if isTrue="{!v.dataSource.Product2__c.Productos_secundarios__r}">-->
+                                <aura:if isTrue="{!or(
+                                    v.dataSource.Product2__c.ProductCode=='des-AF-OPAM',
+                                    v.dataSource.Product2__c.Productos_secundarios__r)
+                                }">
+                                    <th scope="col">
+                                        <div class="slds-truncate">Producto</div>
+                                    </th>
+                                </aura:if> 
+                                <!--Modificado por Alejandro Ramos -->
+                                <aura:if isTrue="{!v.dataSource.Product2__c.ProductCode=='43'}">
+                                    <th scope="col">
+                                        <div class="slds-truncate">Número de expediente</div>
+                                    </th>
+                                </aura:if>
+                                <th scope="col">
+                                    <div class="slds-truncate">ID CLIENTE MERCEDES</div>
+                                </th>
+                            </aura:if>
+							<!--En esta condicion entra producto YC / XC (Argentina) -->
+                            <aura:if isTrue="{!and(
+                                !v.dataSource.Product2__c.IsAffiliate__c, 
+                                !v.dataSource.Product2__c.isPhantomIntegration__c)
+                            }">
+                                <th scope="col">
+                                    <div class="slds-truncate">Razón Social</div>
+                                </th>
+                                <th scope="col">
+									<aura:if isTrue="{!v.dataSource.Product2__c.ProductCode == 'YC' || v.dataSource.Product2__c.ProductCode == 'XC'}">
+										<div class="slds-truncate">CUIT</div>
+										<aura:set attribute="else">
+											<div class="slds-truncate">RFC</div>
+										</aura:set>
+									</aura:if>
+                                </th>
+                                <th scope="col">
+                                    <div class="slds-truncate">Distintivo</div>
+                                </th>
+                                <th scope="col">
+                                    <div class="slds-truncate">Administrador de plataforma</div>
+                                </th>
+                                <th scope="col">
+                                    <div class="slds-truncate">Email</div>
+                                </th>
+                                <th scope="col">
+									<aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='33' || v.dataSource.QuoteLineItem.Product2.IDInterno__c=='60' || v.NTT_IsProductMfa}">
+										<div class="slds-truncate">ID cliente Mercedes</div>
+										<aura:set attribute="else">
+                      <!-- NTT - Inicia - Genera cliente MoPay-->
+                      <aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='29-P'}">
+                        <div class="slds-truncate">Unique Id</div>
+                        <aura:set attribute="else">
+                          <aura:if isTrue="{!v.dataSource.Product2__c.ProductCode == 'YC' || v.dataSource.Product2__c.ProductCode == 'XC'}">
+                            <div class="slds-truncate">Código de Cliente</div>	
+                            <aura:set attribute="else">
+                              <div class="slds-truncate">Cód. AS400 / Id. OPAM</div>
+                            </aura:set>
+                          </aura:if>
+                        </aura:set>
+                      </aura:if>
+                      <!-- NTT - Termina - Genera cliente MoPay-->
+                  </aura:set>
+</aura:if>
+                                    
+                                </th>
+                            </aura:if>
+                        </tr>
+                        <aura:iteration items="{!v.subcuentasAdicionales}" var="item">
+                            <tr>
+                                <aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+                                    <td>
+                                        <div class="slds-truncate">{!item.Name}</div>
+                                    </td>
+                                    <td>
+                                        <div class="slds-truncate">{!item.RFC__c}</div>
+                                    </td>
+                                    <td>
+                                        <div class="slds-truncate">{!item.Razon_Social__c}</div>
+                                    </td>
+                                    <td>
+                                        <div class="slds-truncate">{!item.Distintivo__c}</div>
+                                    </td>
+                                    <td>
+                                        <div class="slds-truncate">{!item.PlatformAdministrator__r.Name}</div>
+                                    </td>
+                                    <!--<aura:if isTrue="{!v.dataSource.Product2__c.Productos_secundarios__r}">-->
+                                    <aura:if isTrue="{!or(
+                                        v.dataSource.Product2__c.ProductCode=='des-AF-OPAM', 
+                                        v.dataSource.Product2__c.Productos_secundarios__r)
+                                    }">
+                                        <th scope="col">
+                                            <div class="slds-truncate">{!item.Texto_libre__c}</div>
+                                        </th>
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.dataSource.Product2__c.Name=='43 Mantenimiento Fleet Américas'}">
+                                        <td>
+                                            <div class="slds-truncate" title="">
+                                                <lightning:input disabled="{!or(v.btnInactive, v.dataSource.Opportunity.RecordType.DeveloperName=='RT_Renegotiation_merchants')}" name="inputCC" value="{!item.FileNumber__c}" messageWhenValueMissing="Campo requerido" required="true"/>
+                                            </div>
+                                        </td>
+                                    </aura:if>
+                                    <aura:if isTrue="{!item.Texto_libre__c=='(31) 31-Mantenimiento de flota'}">
+                                        <td>
+                                            <div class="slds-truncate" title="">
+                                                <lightning:input type='hidden'/>
+                                            </div>
+                                        </td>
+                                    </aura:if>
+                                    <aura:if isTrue="{!item.Texto_libre__c=='(43) 43-Mantenimiento Fleet'}">
+                                        <td>
+                                            <div class="slds-truncate" title="">
+                                                <lightning:input disabled="{!or(v.btnInactive, v.dataSource.Opportunity.RecordType.DeveloperName=='RT_Renegotiation_merchants')}" name="inputCC" value="{!item.FileNumber__c}" messageWhenValueMissing="Campo requerido" required="true"/>
+                                            </div>
+                                        </td>
+                                    </aura:if>
+                                    <td>
+                                        <lightning:input disabled="{!or(v.btnInactive, v.dataSource.Opportunity.RecordType.DeveloperName=='RT_Renegotiation_merchants')}" type="text" label="" value="{!item.CodigoAS400__c}" messageWhenValueMissing="Campo requerido" required="true"/>
+                                    </td>
+                                </aura:if>
+                                <aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+                                    <td>
+                                        <div class="slds-truncate">{!item.Razon_Social__c}</div>
+                                    </td>
+                                    <td>
+                                        <div class="slds-truncate">{!item.RFC__c}</div>
+                                    </td>
+                                    <td>
+                                        <div class="slds-truncate">{!item.Distintivo__c}</div>
+                                    </td>
+                                    <td>
+                                        <div class="slds-truncate">{!item.PlatformAdministrator__r.Name}</div>
+                                    </td>
+                                    <td>
+                                        <div class="slds-truncate">{!item.PlatformAdministrator__r.Email}</div>
+                                    </td>
+                                    <aura:if isTrue="{!or(
+                                        v.dataSource.Filiales.length > 0, 
+                                        v.subcuentasAdicionales.length > 0)
+                                    }">
+                                        <td>
+											<aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='33' || v.dataSource.QuoteLineItem.Product2.IDInterno__c=='60' || v.NTT_IsProductMfa}">
+												<lightning:input disabled="true" 
+													type="text"
+													label="ID cliente Mercedes" 
+													value="{!item.CodigoAS400__c}"
+													messageWhenValueMissing="Campo requerido" 
+													required="true" 
+												/>
+											
+                        <aura:set attribute="else">
+                          <!-- NTT - Inicia - Genera cliente MoPay-->
+                          <aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='29-P'}">
+                            <lightning:input disabled="{!v.btnInactive}" 
+																type="text"
+																label="UniqueId" 
+																value="{!item.CodigoAS400__c}"
+																messageWhenValueMissing="Campo requerido" 
+																required="true" 
+															/>
+                              <aura:set attribute="else">
+													  	  <lightning:input disabled="{!v.btnInactive}" 
+														      type="text"
+														      label="Código AS400" 
+														      value="{!item.CodigoAS400__c}"
+														      messageWhenValueMissing="Campo requerido" 
+														      required="true" 
+													      />
+												      </aura:set>
+                          </aura:if>
+                          <!-- NTT - Termina - Genera cliente MoPay-->
+                        </aura:set>
+											</aura:if>
+                                        </td>
+                                    </aura:if>
+                                </aura:if>
+                            </tr>
+                        </aura:iteration>
+                    </table>
+                </lightning:layout>
+            </aura:if>
+            <aura:if isTrue="{!and(
+                v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation',
+                v.dataSource.Product2__c.IsAffiliate__c)
+            }">
+                <div class="separador" id="separadorEL"></div>
+                <div class="slds-section slds-is-open slds-p-top_medium" id="sectionEL">
+                    <h3 class="slds-section__title slds-theme_shade">
+                        <span class="slds-truncate slds-p-horizontal_small tableFontSize" title="funcionalidades">
+                            Establecimientos
+                        </span>
+                    </h3>
+                </div>
+                <lightning:layout>
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer tableFontSize">
+                        <tr>
+                            <th scope="col">
+                                <div class="slds-truncate">No. de establecimiento</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate">Razón social</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate">RFC</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate">Producto</div>
+                            </th>
+                            <!--Modificado por Carlo Cruz -->
+                            <aura:if isTrue="{!v.dataSource.Product2__c.isPhantomIntegration__c}">
+                                <th scope="col">
+                                    <div class="slds-truncate">Grouper</div>
+                                </th>
+                            </aura:if>
+                            <th scope="col">
+                                <div class="slds-truncate">ID AS400/ID Phantom Establecimiento</div>
+                                 <div class="slds-truncate">Tests</div>
+                            </th>
+                        </tr>
+                        <aura:iteration items="{!v.establecimientos}" var="item" indexVar="index">
+                            <tr>
+                                <td>
+                                    <div class="slds-truncate">Establecimiento {!index + 1}</div>
+                                </td>
+                                <td>
+                                    <div class="slds-truncate">{!item.Affiliate__r.BusinessName__c}</div>
+                                </td>
+                                <td>
+                                    <div class="slds-truncate">{!item.Affiliate__r.RFC__c}</div>
+                                </td>
+                                <td>
+                                    <div class="slds-truncate">{!item.Reference__c}</div>
+                                </td>
+                                <aura:if isTrue="{!v.dataSource.Product2__c.isPhantomIntegration__c}">
+                                    <td>
+                                        <div class="slds-truncate" title="{!item.Grouper__r.Name}">
+                                            <lightning:input name="inputCC" disabled="true" value="{!item.Grouper__c}" />
+                                        </div>
+                                    </td>
+                                </aura:if>
+                                <td>
+                                    <div class="slds-truncate">
+                                        <lightning:input disabled="{!v.btnInactive}" type="text" label="" value="{!item.StationId__c}" messageWhenValueMissing="Campo requerido" required="true"/>
+                                    </div>
+                                </td>
+                            </tr>
+                        </aura:iteration>
+                    </table>
+                </lightning:layout>
+            </aura:if>
+            <div class="separador"></div>
+            <lightning:layout>
+                <lightning:layoutItem flexibility="auto" size="6" class="slds-p-horizontal_medium slds-p-top_medium">
+                    <lightning:input label="Nombre del Grupo" name="nombreCuenta" type="text" step="any"
+                        value="{!v.dataSource.Account.Name}" messageWhenValueMissing="Campo requerido" required="true"
+                        disabled="true" />
+                    <aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+                    	<lightning:input label="{!v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC' ? 'ID Grupo':'ID Grupo AS400'}" name="idGrupoAS400" type="text" step="any"
+	                        value="{!v.dataSource.Account.CodigoClienteAS400__c}" messageWhenValueMissing="Campo requerido"
+	                        required="true" disabled="true" />
+	                </aura:if>
+                    <aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+                    	<lightning:input label="ID Cadena AS400" name="idGrupoAS400" type="text" step="any"
+	                        value="{!v.dataSource.Account.AffiliateCodeAS400__c}" messageWhenValueMissing="Campo requerido" 
+                          required="true" disabled="true" />
+	                </aura:if>
+					<lightning:input label="ID Corporativo" name="idCorp" type="text" step="any"
+	                        value="{!v.dataSource.Account.GLB_ID_Corporativo__c}" messageWhenValueMissing="Campo requerido"
+	                        required="true" disabled="true" />
+                    <lightning:input label="Razon Social" name="razonSocial" type="text" step="any"
+                        value="{!v.dataSource.Account.RazonSocial__c}" messageWhenValueMissing="Campo requerido"
+                        required="true" disabled="true" class="razonSocialLightning" />
+                    <!-- Cambio RFC Cuenta -> EL -->
+                    <lightning:input label="{!v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC' ? 'CUIT':'RFC'}" name="rfc" type="text" step="any"
+                        value="{!v.dataSource.Account.RFC__c}" messageWhenValueMissing="Campo requerido" required="true"
+                        disabled="true" />
+                    <lightning:input label="Representante Legal" name="Representante" type="text" step="any"
+                        value="{!v.dataSource.Contrato2__c.Contacto__r.Name}" required="true" disabled="true" />
+                    <lightning:input label="Email del Representante Legal" name="RepresentanteEmail" type="text"
+                        step="any" value="{!v.dataSource.Contrato2__c.Contacto__r.Email}" required="true"
+                        disabled="true" />
+					<aura:if isTrue="{! !v.dataSource.Product2__c.ProductCode == 'XC' &amp;&amp; !v.dataSource.Product2__c.ProductCode == 'YC'}">
+						<lightning:input label="CURP" name="curp" type="text" step="any"
+							value="{!v.dataSource.ContactRepresentanteLegal.Curp__c}"
+							messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+					</aura:if>
+                    <aura:if isTrue="{!v.dataSource.Product2__c.SendToSIGLO__c}">
+                        <lightning:input label="Género" name="Género" type="text" step="any"
+                            value="{!v.dataSource.ContactRepresentanteLegal.Gender__c}"
+                            messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                        <lightning:input label="Fecha de nacimiento" name="Fecha de nacimiento" type="date"
+                            format="mm/dd/yyyy" value="{!v.dataSource.ContactRepresentanteLegal.Birthdate}"
+                            messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                        <aura:if isTrue="{!v.dataSource.ContactRepresentanteLegal.BirthCountry__c == 'MEXICO'}">
+                            <lightning:input label="Entidad Federativa de Nacimiento"
+                                name="Entidad Federativa de Nacimiento" type="text" step="any"
+                                value="{!v.dataSource.ContactRepresentanteLegal.BirthState__c}"
+                                messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                            <aura:set attribute="else">
+                                <lightning:input label="Entidad Federativa de Nacimiento"
+                                    name="Otra Entidad Federativa de Nacimiento" type="text" step="any"
+                                    value="{!v.dataSource.ContactRepresentanteLegal.OtherBirthState__c}"
+                                    messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                            </aura:set>
+                        </aura:if>
+                        <lightning:input label="País de nacimiento" name="País de nacimiento" type="text" step="any"
+                            value="{!v.dataSource.ContactRepresentanteLegal.BirthCountry__c}"
+                            messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                        <lightning:input label="Nacionalidad" name="Nacionalidad" type="text" step="any"
+                            value="{!v.dataSource.ContactRepresentanteLegal.Nationality__c}"
+                            messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                        <lightning:input label="Ocupación" name="Ocupación" type="text" step="any"
+                            value="{!v.dataSource.ContactRepresentanteLegal.ProfessionName__c}"
+                            messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                        <lightning:input label="Clave de elector" name="Clave de elector" type="text" step="any"
+                            value="{!v.dataSource.ContactRepresentanteLegal.ElectorID__c}"
+                            messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                    </aura:if>
+                    <!--lightning:input label="SubCuenta" name="subcuenta" type="text"  step="any" value="{!v.dataSource.Opportunity.Contrato_Filial__r.CodigoAS400__c}" messageWhenValueMissing="Campo requerido" required="true" disabled="true"/-->
+                    <aura:if isTrue="{!v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC'}">
+                    	<lightning:input label="Sector" 
+							name="sector" 
+							type="text" 
+							step="any"
+	                        value="{!v.dataSource.Account.Sector__c}" 
+							messageWhenValueMissing="Campo requerido"
+	                        required="true" 
+							disabled="true"
+						/>
+	                </aura:if>
+					<lightning:input label="Telefono 1" name="telefono" type="text" step="any"
+                        value="{!v.dataSource.Account.Phone}" messageWhenValueMissing="Campo requerido" required="true"
+                        disabled="true" />
+                    <lightning:input label="Telefono 2" name="telefono2" type="text" step="any"
+                        value="{!v.dataSource.Account.Telefono2__c}" messageWhenValueMissing="Campo requerido"
+                        required="true" disabled="true" />
+						<div>
+							<aura:if isTrue="{!v.isProduct29}">
+								<lightning:input 
+									label="Profesión" 
+									name="giro" 
+									type="text" 
+									step="any"
+									value="{!v.dataSource.ContactRepresentanteLegal.CatalogoProfesion__c}" 
+									messageWhenValueMissing="Campo requerido"
+									required="true" 
+									disabled="true" 
+								/>
+								<aura:set attribute="else">
+									<lightning:input 
+										label="Giro" 
+										name="giro" 
+										type="text" 
+										step="any"
+										value="{!v.dataSource.Account.Giro__c}" 
+										messageWhenValueMissing="Campo requerido"
+										required="true" 
+										disabled="true" 
+									/>
+								</aura:set>
+							</aura:if>
+						</div>
+						
+					<aura:if isTrue="{!v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC'}">
+						<lightning:input label="Actividad económica" 
+							name="EconomicActivity" 
+							type="text" 
+							step="any"
+							value="{!v.entidadLegal.EconomicActivity__c}" 
+							messageWhenValueMissing="Campo requerido"
+							required="true" 
+							disabled="true"
+						/>
+						<aura:set attribute="else">
+							<lightning:input label="Giro" name="giro" type="text" step="any"
+								value="{!v.dataSource.Account.Giro__c}" messageWhenValueMissing="Campo requerido"
+								required="true" disabled="true" />
+						</aura:set>
+					</aura:if>
+					
+					<!--A que api name debe apuntar?-->
+					<aura:if isTrue="{!v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC'}">
+						<lightning:input label="Código de actividad económica" 
+							name="giro" 
+							type="text" 
+							step="any"
+							value="{!v.dataSource.Account.Giro__c}" 
+							messageWhenValueMissing="Campo requerido"
+							required="true" 
+							disabled="true"
+						/>
+					</aura:if>
+                    
+                    <lightning:input label="Solución" name="familia" type="text" step="any"
+                        value="{!v.dataSource.Opportunity.Familia__c}" messageWhenValueMissing="Campo requerido"
+                        required="true" disabled="true" />
+                    <lightning:input label="Producto" name="producto" type="text" step="any"
+                        value="{!v.dataSource.Opportunity.Producto_cotizacion__c}"
+                        messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                    <!--6298 >> Added if condition (Descomentar 'if' y cierre de 'if' de más abajo si se activa Tarjetas Virtuales) 
+                    <aura:if isTrue="{!v.dataSource.Opportunity.RecordType.DeveloperName!='Activacion_Servicio'}"> -->
+					<lightning:input label="Origen de Venta" name="origenVenta" type="text" step="any"
+										value="{!v.dataSource.Opportunity.LeadSource}" messageWhenValueMissing="Campo requerido"
+										required="true" disabled="true" />
+					<aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+						<lightning:input label="Suborigen de Venta" name="SuborigenVenta" type="text" step="any"
+											value="{!v.dataSource.Opportunity.SubOrigen__c}" messageWhenValueMissing="Campo requerido"
+											required="true" disabled="true" />
+					</aura:if>
+					<aura:if isTrue="{! !v.dataSource.Product2__c.ProductCode == 'XC' &amp;&amp; !v.dataSource.Product2__c.ProductCode == 'YC'}">
+						<lightning:input label="Soluciones White Label" name="SolucionesWhiteLabel" type="text" step="any"
+							value="{!v.dataSource.Opportunity.Maquilador__c}" messageWhenValueMissing="Campo requerido"
+              required="true" disabled="true" />
+					</aura:if>
+					
+					<aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+						<aura:if isTrue="{! !v.dataSource.Product2__c.ProductCode == 'XC' &amp;&amp; !v.dataSource.Product2__c.ProductCode == 'YC'}">
+							<lightning:input label="Competidor" name="competidor" type="text" step="any"
+								value="{!v.dataSource.Opportunity.Competidor__c}" messageWhenValueMissing="Campo requerido"
+								required="true" disabled="true" />
+						</aura:if>
+					</aura:if>
+					<aura:if isTrue="{! !v.dataSource.Product2__c.ProductCode == 'XC' &amp;&amp; !v.dataSource.Product2__c.ProductCode == 'YC'}">
+						<lightning:input label="Porcentaje Bonificación" name="Porcentaje Bonificación" type="text" step="any"
+							value="{!v.dataSource.Opportunity.Porcentaje_Bonificacion__c}" messageWhenValueMissing="Campo requerido"
+							required="true" disabled="true" />
+						<ui:inputCheckbox label="Bonificación PRO descuento" name="Bonificación PRO descuento" value="{!v.dataSource.Opportunity.Bonificacion__c}" required="true" disabled="true" />
+					</aura:if>
+                    <!-- </aura:if>   << 6298-->
+                </lightning:layoutItem>
+                <aura:if isTrue="{!v.app_edenred.render == true}">
+                    <div id="visorDocumentos">
+                        <lightning:layoutItem flexibility="auto" size="12"
+                            class="slds-p-horizontal_medium slds-p-top_medium">
+                            <strong class="slds-text-heading_small">
+                                Visor de Documentos Cargados
+                            </strong>
+                            <aura:iteration items="{!v.attachmentSource}" var="document" indexVar="index">
+                                <lightning:layout>
+                                    <lightning:layoutItem flexibility="shrink" padding="around-small" size="4">
+                                        <div>
+                                            <strong>{!document.Name}</strong>
+                                        </div>
+                                    </lightning:layoutItem>
+                                    <lightning:layoutItem flexibility="shrink" padding="around-small" size="8"
+                                        class="slds-align_absolute-center">
+                                        <div>
+                                            <a target="_blank" class="slds-button slds-button--brand"
+                                                href="{!'/' + document.Id}">Ver</a>
+                                        </div>
+                                    </lightning:layoutItem>
+                                </lightning:layout>
+								<!--//isOpen no se usa? Ya que arriba se esta redireccionando con href -->
+                                <aura:if isTrue="{!v.isOpen}">
+                                    <div role="dialog" tabindex="-1" aria-labelledby="header99"
+                                        class="slds-modal slds-fade-in-open  slds-modal_medium">
+                                        <div class="slds-modal__container">
+                                            <!-- ###### MODAL BOX HEADER Part Start From Here ######-->
+                                            <div class="slds-modal__header">
+                                                <button class="slds-button slds-modal__close slds-button--icon-inverse"
+                                                    title="Close" onclick="{!c.closeModel}">
+                                                    <span class="slds-assistive-text">Cerrar</span>
+                                                </button>
+                                                <h2 id="header99" class="slds-text-heading--medium"></h2>
+                                            </div>
+                                            <!--###### MODAL BOX BODY Part Start From Here ######-->
+                                            <div class="slds-modal__content slds-p-around--large">
+                                                <iframe class="frameImg" width="100%" height="1200" src="{!v.urlPDF}"
+                                                    frameborder="0"></iframe>
+                                            </div>
+                                            <!--###### MODAL BOX FOOTER Part Start From Here ######-->
+                                            <div class="slds-modal__footer">
+                                                <button class="slds-button slds-button_destructive"
+                                                    onclick="{!c.closeModel}">Cerrar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-backdrop slds-backdrop--open"></div>
+                                </aura:if>
+                            </aura:iteration>
+							<!--
+								Mejora 09-23: Se agrega visualizacion de adjuntos (convenio modificatorio)
+								Condicion: Solo para producto 33 y tipo de registro Oportunidad Renegociacion
+							-->
+							<aura:if isTrue="{! v.dataSource.Opportunity.RecordType.DeveloperName=='RT_Renegotiation' &amp;&amp; v.isProductFleet}">
+								<aura:iteration items="{!v.convenioModificatorio}" var="document" indexVar="index">
+									<lightning:layout>
+										<lightning:layoutItem flexibility="shrink" padding="around-small" size="4">
+											<div>
+												<strong>{!document.Name}</strong>
+											</div>
+										</lightning:layoutItem>
+										<lightning:layoutItem flexibility="shrink" padding="around-small" size="8"
+											class="slds-align_absolute-center">
+											<div>
+												<a target="_blank" class="slds-button slds-button--brand"
+													href="{!'/' + document.Id}">Ver</a>
+											</div>
+										</lightning:layoutItem>
+									</lightning:layout>
+								</aura:iteration>
+							</aura:if>
+                        </lightning:layoutItem>
+                    </div>
+                </aura:if>
+            </lightning:layout>
+            <aura:if isTrue="{! v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation'}"> <!--6298: ,v.dataSource.Opportunity.RecordType.DeveloperName!='Activacion_Servicio' (Agregar si se activa Tarjetas virtuales con un and() para ambos RT)-->
+                <!--CEAM:3563-->
+                <div class="separador"></div>
+				<aura:if isTrue="{! v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC'}">
+					<div class="seccionDiv">
+						<h2 style="padding-left:1em;" class="slds-text-heading_small">
+							Direcciones relacionadas
+						</h2>
+					</div>
+				</aura:if>
+				<aura:if isTrue="{! !v.dataSource.Product2__c.ProductCode == 'XC' &amp;&amp; !v.dataSource.Product2__c.ProductCode == 'YC'}">
+					<lightning:layout>
+						<lightning:layoutItem flexibility="auto" size="10"
+							class="slds-p-horizontal_medium slds-p-top_medium">
+                        <lightning:input label="Correo que recibe la factura" name="recibeFactura" type="text"
+								step="any" 
+								value="{!if(
+									!v.dataSource.Product2__c.IsAffiliate__c, 
+									v.dataSource.Contrato2__c.CorreoRecibeFactura__c, 
+									v.dataSource.Contrato2__c.BillingContact__r.Email)
+								}"
+                            messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+						</lightning:layoutItem>
+					</lightning:layout>
+					<lightning:layout>
+						<lightning:layoutItem flexibility="auto" size="10"
+							class="slds-p-horizontal_medium slds-p-top_medium">
+                        <aura:if isTrue="{and(!!v.isProductFleet, not(v.isProductEcovale))}">
+                            <lightning:input label="Otros correos" name="OtrosCorreos" type="text" step="any"
+                                value="{!v.dataSource.Contrato2__c.Otros_correos__c}" disabled="true" />
+							</aura:if>
+						</lightning:layoutItem>
+					</lightning:layout>
+				</aura:if>
+                
+                <lightning:layout>
+                    <lightning:layoutItem flexibility="auto" size="10"
+                        class="slds-p-horizontal_medium slds-p-top_medium">
+                        <!--lightning:input label="Direccion Fiscal" name="direccionFiscal" type="text"  step="any" value="{!v.dataSource.Account.DireccionFiscal}" messageWhenValueMissing="Campo requerido" required="true" disabled="true"/-->
+                        <lightning:input label="Direccion Fiscal" name="direccionFiscal" type="text" step="any"
+                            value="{!if(
+                                and(
+                                    v.dataSource.Contrato2__c.FiscalAddressText__c!=null,
+                                    v.dataSource.Contrato2__c.FiscalAddressText__c!='C.P'),
+                                v.dataSource.Contrato2__c.FiscalAddressText__c,
+                                v.dataSource.Contrato2__c.DireccionFiscal__c)
+                            }"
+                            messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+                    </lightning:layoutItem>
+                </lightning:layout>
+                <!-- DVM: Requerimiento de Direcciones de Entrega-->
+                <aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+	                <lightning:layout>
+	                    <lightning:layoutItem flexibility="auto" size="12" class="slds-p-horizontal_medium slds-p-top_medium">
+	                        {!v.dirEntregaCMP}
+	                    </lightning:layoutItem>
+                    </lightning:layout>
+                </aura:if>
+            </aura:if><!--END condition is Renegotiation?-->
+            <!-- DVM: Requerimiento de Direcciones de Entrega-->
+			<!--Se agrega seccion Comentarios de Aprobacion para Productos ARG-->
+			<aura:if isTrue="{!v.isProductArgentina}">
+				<div class="separador"></div>
+				<div class="seccionDiv slds-p-horizontal_medium slds-p-bottom_medium">
+					<h2 style="padding-left:1em;" class="slds-text-heading_small">
+						Comentarios de Aprobación
+					</h2>
+				</div>
+				<div class="slds-p-left_medium">
+					<aura:if isTrue="{!v.submitterComment}">
+						<div class="slds-text-title_bold slds-m-bottom_medium slds-m-left_medium slds-p-top_medium">
+							<p>Comentarios del emisor {!v.dataSource.Owner.Name}: <span
+									class="blue">{!v.submitterComment}</span></p>
+						</div>
+					</aura:if>
+					<aura:if isTrue="{!v.lastComments}">
+						<div class="slds-text-title_bold slds-m-top_medium slds-m-left_medium">
+							Comentarios de aprobadores anteriores
+						</div>
+						<ui:scrollerWrapper>
+							<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered">
+								<thead>
+									<tr class="slds-line-height_reset">
+										<th class="" scope="col">
+											<div class="slds-truncate black" title="Opportunity Name">Aprobador</div>
+										</th>
+										<th class="" scope="col">
+											<div class="slds-truncate black" title="Opportunity Name">Comentario</div>
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									<aura:iteration items="{!v.lastComments}" var="item" indexVar="index">
+										<tr class="slds-hint-parent">
+											<th data-label="Aprobador" scope="row">
+												<div class="slds-truncate bold" title="Cloudhub">
+													{!index+1}&nbsp;{!item.Actor.Name}</div>
+											</th>
+											<td data-label="Comentario">
+												<div class="slds-truncate" title="Cloudhub">{!item.Comments}</div>
+											</td>
+										</tr>
+									</aura:iteration>
+								</tbody>
+							</table>
+						</ui:scrollerWrapper>
+					</aura:if>
+				</div>
+				
+			</aura:if>
+			
+            <aura:if isTrue="{!
+            v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation' ||
+            (
+              v.dataSource.Opportunity.RecordType.DeveloperName=='RT_Renegotiation' &amp;&amp;
+              notequals(v.isApprovalQuote,true) &amp;&amp;
+              v.dataSource.QuoteLineItem.Product2.IDInterno__c!='33'
+					) ||
+           (
+          v.dataSource.Opportunity.RecordType.DeveloperName=='RT_Renegotiation' &amp;&amp;
+          v.dataSource.QuoteLineItem.Product2.IDInterno__c=='33' &amp;&amp;
+          v.dataSource.Opportunity.GLB_Cambio_Condiciones_Comerciales__c
+					)
+            }">
+                <!--CEAM:3563-->
+                <div class="separador"></div>
+                <div class="slds-section slds-is-open slds-p-top_medium">
+                    <h3 class="slds-section__title slds-theme_shade">
+                        <span class="slds-truncate slds-p-horizontal_small" title="funcionalidades">
+                            Condiciones Comerciales
+                        </span>
+                    </h3>
+                </div>
+                <lightning:layout>
+                    <lightning:layoutItem flexibility="auto" size="12" class="slds-p-horizontal_medium slds-p-top_medium">
+                        <h3 class="slds-section-title--divider dividerTable">{!v.isProductArgentina ? 'Detalle de producto':'Soluciones '+ v.dataSource.Name}</h3>
+                        <div class="slds-form--stacked slds-p-top--medium slds-p-bottom--medium slds-m-bottom--x-small">
+                            <div class="slds-form-element">
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                    <thead>
+                                        <tr class="slds-line-height_reset slds-border--bottom">
+                                            <th scope="col">
+                                                <div class="slds-truncate" title="Nombre del producto">Nombre del producto</div>
+                                            </th>
+                                            <aura:if isTrue="{!v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation'}">
+                                                <!--CEAM:3563-->
+                                                <aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+                                                	<th scope="col">
+	                                                    <div class="slds-truncate" title="Cobertura">Cobertura</div>
+	                                                </th>
+	                                                <!-- SE COMENTA USO Y SEGURIDAD PARA REQ DE AFILIADOS OPAM -->
+	                                                <!--<th scope="col">
+	                                                    <div class="slds-truncate" title="Uso">Uso</div>
+	                                                </th>
+	                                                <th scope="col">
+	                                                    <div class="slds-truncate" title="Seguridad">Seguridad</div>
+	                                                </th>-->
+                                                	<!--MAU:3374 SE DESCOMENTA PARA ACTIVAR NECTAR-->
+                                                	<!--<th style="{!v.tiposDeMedio.length > 0 ? 'display :none;' : 'display: block;'}" scope="col">
+	                                                    <div class="slds-truncate" title="Cantidad de tarjetas">
+	                                                        Cantidad<br />de tarjetas</div>
+	                                                </th>-->
+	                                                <!-- FIN COMENTARIOS REQ DE AFILIADOS OPAM -->
+                                                </aura:if>
+												<aura:if isTrue="{!v.isProductArgentina}">
+													<th scope="col">
+	                                                    <div class="slds-truncate" title="Uso">Uso</div>
+	                                                </th>
+													<th scope="col">
+	                                                    <div class="slds-truncate" title="Seguridad">Seguridad</div>
+	                                                </th>
+													<th scope="col">
+	                                                    <div class="slds-truncate" title="Cantidad de tarjetas o chequeras">Cantidad de tarjetas o chequeras</div>
+	                                                </th>
+													<th scope="col">
+	                                                    <div class="slds-truncate" title="Volumen de emision">Volumen de emisión</div>
+	                                                </th>
+												</aura:if>
+                                            </aura:if>
+                                            <aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+												<!-- SE COMENTA POR REQ OPAM -->
+                                                <!--<th scope="col">
+                                                	<div class="slds-truncate" title="Precio de venta">Volumen de<br/>emisión</div>
+                                            	</th>-->
+                                            </aura:if>
+                                            <aura:if isTrue="{!v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation'}">
+                                                <!--CEAM:3563-->
+                                                <aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c &amp;&amp; !v.isProductArgentina}">
+													<th scope="col">
+                                                    	<div class="slds-truncate" title="Fecha">Fecha</div>
+                                                	</th>
+                                                </aura:if>
+                                                <aura:if isTrue="{!v.dataSource.Product2__c.SendToSIGLO__c}">
+                                                    <th scope="col">
+                                                        <div class="slds-has-flexi-truncate"
+                                                            title="Número estimado de transacciones">
+                                                            Número<br />estimado de<br />transacciones</div>
+                                                    </th>
+                                                    <th scope="col">
+                                                        <div class="slds-truncate"
+                                                            title="Realizará sus operaciones en dólares?">Realizará
+                                                            sus<br />operaciones<br />en dólares?</div>
+                                                    </th>
+                                                </aura:if>
+												<aura:if isTrue="{!v.isProductArgentina}">
+													<th scope="col">
+														<div class="slds-truncate" title="Litros">Litros</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate" title="Litros">Fecha estimada de compra</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate" title="Litros">Direcciones de Entrega</div>
+													</th>
+													<aura:set attribute="else">
+														<aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+															<th scope="col">
+																<div class="slds-truncate" title="Competidor">Competidor</div>
+															</th>
+														</aura:if>
+													</aura:set>
+												</aura:if>
+                                                
+                                            </aura:if>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="slds-line-height_reset slds-border--bottom">
+                                            <td data-label="Nombre del producto">
+                                                <lightning:input name="nombreProducto" type="text" step="any" value="{!v.dataSource.Product2__c.Name}" disabled="true"/>
+                                            </td>
+                                            <aura:if isTrue="{!v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation'}">
+                                                <!--CEAM:3563-->
+                                                <aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c &amp;&amp; !v.isProductArgentina}">
+													<td>
+	                                                    <label>{!v.dataSource.Product2__c.Red__c}</label>
+	                                                </td>
+	                                                <!-- SE COMENTA USO Y SEGURIDAD PARA REQ DE AFILIADOS OPAM -->
+	                                                <!--<td>
+	                                                    <label>{!v.dataSource.Product2__c.Uso__c}</label>
+	                                                </td>
+	                                                <td>
+	                                                    <label>{!v.dataSource.Product2__c.Formato__c}</label>
+	                                                </td>-->
+	                                                <!--MAU:3374 SE DESCOMENTA PARA ACTIVAR NECTAR-->
+	                                                <!-- SE COMENTA POR REQ AFILIADOS OPAM
+	                                                    style="{!v.tiposDeMedio.length > 0 ? 'display :none;' : 'display: block;'}">
+	                                                    <lightning:input label="CantidadTarjetas" name="cantidadTarjetas"
+	                                                        type="text" step="any"
+	                                                        value="{!v.dataSource.QuoteLineItem.CantidadTarjetas__c}"
+	                                                        disabled="true" />
+	                                                </td>-->
+                                                </aura:if>
+                                            </aura:if>
+                                            <aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+												<!--<td>
+                                                	<label>{!v.dataSource.QuoteLineItem.UnitPrice}</label>
+                                            	</td>-->
+                                            </aura:if>
+                                            <aura:if isTrue="{!v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation'}">
+                                                <!--CEAM:3563-->
+                                                <aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c &amp;&amp; !v.isProductArgentina}">
+													<td>
+                                                    	<label>{!v.dataSource.QuoteLineItem.ServiceDate}</label>
+                                                	</td>
+                                                </aura:if>
+                                                <aura:if isTrue="{!v.dataSource.Product2__c.SendToSIGLO__c}">
+                                                    <td>
+                                                        <label>{!v.dataSource.QuoteLineItem.Quote.TransactionsEstimatedNumber__c}</label>
+                                                    </td>
+                                                    <td>
+                                                        <label>{!v.dataSource.QuoteLineItem.Quote.OperationsInDollars__c}</label>
+                                                    </td>
+                                                </aura:if>
+												<aura:if isTrue="{!v.isProductArgentina}">
+													<td>
+	                                                    <label>{!v.dataSource.Product2__c.Red__c}</label>
+	                                                </td>
+													<td>
+	                                                    <label>{!v.dataSource.Product2__c.Uso__c}</label>
+	                                                </td>
+													<td>
+	                                                    <label>{!v.dataSource.Product2__c.Formato__c}</label>
+	                                                </td>
+													<td>
+	                                                    <label>{!v.dataSource.QuoteLineItem.CantidadTarjetas__c}</label>
+	                                                </td>
+													<td>
+	                                                    $ <lightning:formattedNumber value="{!v.dataSource.QuoteLineItem.UnitPrice}" maximumFractionDigits="2" minimumFractionDigits="2"/>
+	                                                </td>
+													<td>
+														<label>{!v.dataSource.Opportunity.GLBAr_Cantidad_Litros__c}</label>
+													</td>
+													<td>
+														<label>{!v.dataSource.Opportunity.CloseDate}</label>
+													</td>
+													<td>
+														<label>{!v.dataSource.NumberOfShipments__c}</label>
+													</td>
+													<aura:set attribute="else">
+														<aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+															<td>
+																<label>{!v.dataSource.Opportunity.Competidor__c}</label>
+															</td>
+														</aura:if>
+													</aura:set>
+												</aura:if>
+                                            </aura:if>
+                                        </tr>
+                                        <!--MAU:3374 >>>INICIO SE DESCOMENTA PARA ACTIVAR NECTAR -->
+                                        <aura:if isTrue="{!v.tiposDeMedio.length > 0}">
+											<tfoot>
+												<tr>
+													<th>Tipos de medio</th>
+												</tr>
+												<tr>
+													<aura:iteration items="{!v.tiposDeMedio}" var="medio">
+														<th>{!medio}</th>
+														<aura:if isTrue="{!medio == 'Tarjetas Físicas'}">
+															<th style="padding: .5px; width=5%;">
+																<lightning:input type="text"
+																	value="{!v.physicalCardQuantity__c}" disabled="true" />
+															</th>
+														</aura:if>
+														<aura:if isTrue="{!medio == 'Tarjetas Virtuales'}">
+															<th style="padding: .5px;width=5%;">
+																<lightning:input type="text" value="{!v.virtualCardQuantity__c}"
+																	disabled="true" />
+															</th>
+														</aura:if>
+														<aura:if isTrue="{!medio == 'TAG Regular'}">
+															<th style="padding: .5px;width=5%;">
+																<lightning:input type="text" value="{!v.regularTagQuantity__c}"
+																	disabled="true" />
+															</th>
+														</aura:if>
+														<aura:if isTrue="{!medio == 'TAG Dual'}">
+															<th style="padding: .5px;width=10%;">
+																<lightning:input type="text" value="{!v.dualTagQuantity__c}"
+																	disabled="true" />
+															</th>
+														</aura:if>
+													</aura:iteration>
+												</tr>
+												<tr>
+													<aura:if isTrue="{!and(v.isProductFleet,v.dataSource.Contrato2__c.Package__c == 'Premium Plus')}">
+														<th>Diseño de Tarjeta</th>
+														<lightning:input name="nombreProducto" type="text" step="any" value="{!v.dataSource.Quote.GLB_designCardType__c}" disabled="true"/>	
+													</aura:if>
+													
+												</tr>
+											</tfoot>
+										</aura:if>
+										<!--MAU:3374 <<<FIN -->
+									</tbody>
+            					</table>
+        					</div>
+    					</div>
+						<!--INICIA SECCION METODO DE PAGO-->
+						<aura:if isTrue="{!v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation'}"> <!--6298: ,v.dataSource.Opportunity.RecordType.DeveloperName!='Activacion_Servicio' (Agregar si se activa Tarjetas Virtuales con un and() para ambos RT)-->
+							<!--CEAM:3563-->
+							<aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+								<h3 class="slds-section-title--divider dividerTable">(Metodo de pago - {!v.dataSource.Name}/{!v.dataSource.Product2__c.Name})</h3>
+							</aura:if>
+							<aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+								<h3 class="slds-section-title--divider dividerTable">Forma de cobro</h3>
+							</aura:if>
+							<div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+								<!-- <div class="slds-scrollable"> -->
+									<div class="slds-form-element">
+										<aura:if isTrue="{!v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC'}">
+											<ui:inputCheckbox label="Transferencia electronica" name="transElectronica" value="{!v.transferenciaElectronica}" disabled="true" />
+											<aura:set attribute="else">
+												<aura:if isTrue="{!and(!v.dataSource.Product2__c.IsAffiliate__c, !v.isProductEcovale)}">
+													<lightning:layout>
+														<lightning:layoutItem flexibility="auto" size="3" class="slds-p-horizontal_medium slds-p-top_medium">
+															<ui:inputCheckbox label="Transferencia electronica" name="transElectronica" value="{!v.transferenciaElectronica}" required="true" disabled="true" />
+															<aura:if isTrue="{!v.transferenciaElectronica}">
+																<lightning:input label="Opciones de metodo de pago" name="opcPago" type="text" step="any" value="{!v.dataSource.QuoteLineItem.OpcionesMetodoPago__c}" messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+																<!--<lightning:input label="Tarjeta asociada" name="tarjAsoc" type="text"  step="any" value="{!v.dataSource.QuoteLineItem.TarjetaAsociada__c}" messageWhenValueMissing="Campo requerido" required="true" disabled="true"/>-->
+																<!--<lightning:input label="Clabe interbancaria" name="clabeInt" type="text"  step="any" value="{!v.dataSource.QuoteLineItem.ClabeInterbancaria__c}" messageWhenValueMissing="Campo requerido" required="true" disabled="true"/>-->
+															</aura:if>
+														</lightning:layoutItem>
+														<lightning:layoutItem flexibility="auto" size="3" class="slds-p-horizontal_medium slds-p-top_medium">
+															<ui:inputCheckbox label="American Express" name="AM" value="{!v.amex}" required="true" disabled="true" />
+															<aura:if isTrue="{!v.amex}">
+																<aura:if isTrue="{!!v.isProductFleet}">
+																	<lightning:input label="Tipo" name="tipoAmex" type="text" step="any" value="{!v.dataSource.QuoteLineItem.TipoAmex__c}" messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+																	<lightning:input label="Nivel de Consumo" name="nivelConsumo" type="text" step="any" value="{!v.dataSource.QuoteLineItem.NivelConsumo__c}" messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+																</aura:if>
+															</aura:if>
+														</lightning:layoutItem>
+														<lightning:layoutItem flexibility="auto" size="3" class="slds-p-horizontal_medium slds-p-top_medium">
+															<ui:inputCheckbox label="Depósito bancario" name="depBancario" value="{!v.depositoBancario}" required="true" disabled="true" />
+														</lightning:layoutItem>
+														<lightning:layoutItem flexibility="auto" size="3" class="slds-p-horizontal_medium slds-p-top_medium">
+															<ui:inputCheckbox label="Pago online" name="pagoOnline" value="{!v.pagoOnline}" required="true" disabled="true" />
+														</lightning:layoutItem>
+														<lightning:layoutItem flexibility="auto" size="3" class="slds-p-horizontal_medium slds-p-top_medium">
+															<ui:inputCheckbox label="STP" name="STP" value="{!v.STP}" required="true" disabled="true" />
+														</lightning:layoutItem>
+													</lightning:layout>
+												</aura:if>
+											</aura:set>
+										</aura:if>
+										
+										<lightning:layout>
+											<aura:if isTrue="{! !v.isProductFleet &amp;&amp; !v.isProductEcovale &amp;&amp; v.dataSource.Product2__c.ProductCode != 'XC' &amp;&amp; v.dataSource.Product2__c.ProductCode != 'YC'}">
+												<aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+													<lightning:layoutItem flexibility="auto" size="3" class="slds-p-horizontal_medium slds-p-top_medium">
+														<ui:inputCheckbox label="Otros" name="otros" value="{!v.otros}" required="true" disabled="true" />
+														<aura:if isTrue="{!v.otros}">
+															<lightning:input label="Otro metodo de pago" name="otroMP" type="text" step="any" value="{!v.dataSource.QuoteLineItem.OtroMetodoPago__c}" messageWhenValueMissing="Campo requerido" required="true" disabled="true" />
+														</aura:if>
+													</lightning:layoutItem>
+												</aura:if>
+											</aura:if>
+                                        <!--Agregado por Daniel Vargas 2/29/2024-->
+                                        <aura:if isTrue="{!v.isProductEcovale}">
+                                            <lightning:layoutItem flexibility="auto" size="3" class="slds-p-horizontal_medium slds-p-top_medium">
+												<ui:inputCheckbox label="Depósito bancario" name="depBancario" value="{!v.depositoBancario}" required="true" disabled="true" />
+											</lightning:layoutItem>
+                                            <lightning:layoutItem flexibility="auto" size="3" class="slds-p-horizontal_medium slds-p-top_medium">
+												<ui:inputCheckbox label="STP" name="STP" value="{!v.STP}" required="true" disabled="true" />
+											</lightning:layoutItem>
+                                        </aura:if>
+										<!--Termina-->
+											<aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+												<lightning:layoutItem flexibility="auto" size="3" class="slds-p-horizontal_medium slds-p-top_medium">
+													<lightning:input label="Tipo de cobro" type="text" step="any" value="{!v.dataSource.Contrato2__c.ChargeType__c}" disabled="true"/>
+												</lightning:layoutItem>
+												<lightning:layoutItem flexibility="auto" size="3" class="slds-p-horizontal_medium slds-p-top_medium">
+													<lightning:input label="Forma de cobro" type="text" step="any" value="{!v.dataSource.Contrato2__c.WayPay__c}" disabled="true"/>
+												</lightning:layoutItem>
+											</aura:if>
+										</lightning:layout>
+									</div>
+								<!-- </div> -->
+							</div>
+						</aura:if>
+						<!--CEAM:3375 >>> -->
+						<aura:if isTrue="{!v.dataSource.QuoteLineItem.PaymentMethod__c == 'Pospago'}">
+							<span class="page-break"></span>
+							<h3 class="slds-section-title--divider dividerTable">(Modalidad de Pago {!v.dataSource.Name}/{!v.dataSource.Product2__c.Name})</h3>
+							<div class="slds-scrollable">
+								<div class="slds-form-element">
+									<table class="slds-table slds-table_bordered slds-table_cell-buffer">
+										<thead>
+											<aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c=='33' || v.NTT_IsProductMfa}">
+												<th scope="col">
+													<div class="slds-truncate" title="Línea de crédito pre-autorizada">Línea de crédito pre-autorizada</div>
+												</th>
+												<th scope="col">
+													<div class="slds-truncate" title="Término de pago">Término de pago</div>
+												</th>
+												<th scope="col">
+													<div class="slds-truncate" title="Tipo de Garantía">Tipo de Garantía</div>
+												</th>
+												<th scope="col">
+													<div class="slds-truncate" title="Valor Total de la Garantía">Valor Total de la Garantía</div>
+												</th>
+												<th scope="col">
+													<div class="slds-truncate" title="Fecha fin de la garantía">Fecha fin de la garantía</div>
+												</th>
+												<th scope="col">
+													<div class="slds-truncate" title="Pre-Análisis">Pre-Análisis</div>
+												</th>
+											</aura:if>
+											<aura:set attribute="else">
+												<aura:if isTrue="{!v.dataSource.QuoteLineItem.Quote.FechaCreacionModifica__c}">
+													<tr>
+														<aura:if isTrue="{!or(
+															v.dataSource.Opportunity.Familia__c == 'Combustible', 
+															v.dataSource.Opportunity.Familia__c == 'Empresarial')
+														}"> 
+															<th scope="col">
+																<div class="slds-truncate" title="Periodo de Liberación">Periodo de Liberación</div>
+															</th>
+														</aura:if>
+														<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+															<th scope="col">
+																<div class="slds-truncate" title="Periodo de Liberación">Periodo de Liberación</div>
+															</th>
+														</aura:if>
+														<aura:if isTrue="{!or(
+															v.dataSource.Opportunity.Familia__c == 'Vestimenta', 
+															v.dataSource.Opportunity.Familia__c == 'Ticket Restaurante')
+														}"> 
+															<th scope="col">
+																<div class="slds-truncate" title="imite de Credito">Límite de Crédito</div>
+															</th>
+														</aura:if>
+														<aura:if isTrue="{!or(
+															v.dataSource.Opportunity.Familia__c == 'Regalo', 
+															v.dataSource.Opportunity.Familia__c == 'Despensa')
+														}">  
+															<th scope="col">
+																<div class="slds-truncate" title="Limite de Credito">Límite de Crédito</div>
+															</th>
+														</aura:if>
+														<aura:if isTrue="{!or(
+															v.dataSource.Opportunity.Familia__c == 'Combustible', 
+															v.dataSource.Opportunity.Familia__c == 'Empresarial', 
+															v.dataSource.Opportunity.Familia__c == 'Mantenimiento')
+														}"> 
+															<th scope="col">
+																<div class="slds-truncate" title="Periodo de Liberación">Monto Liberado por Periodo</div>
+															</th>
+														</aura:if>
+														<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+															<th scope="col">
+																<div class="slds-truncate" title="Periodo de Liberación">Monto Liberado por Periodo</div>
+															</th>
+														</aura:if>
+														<th scope="col">
+															<div class="slds-truncate" title="Días de Crédito">Días de Crédito</div>
+														</th>
+														<th scope="col">
+															<div class="slds-truncate" title="Tipo de Garantía">Tipo de Garantía</div>
+														</th>
+														<th scope="col">
+															<div class="slds-truncate" title="Semanas de Crédito">Semanas de Crédito</div>
+														</th>
+														<aura:if isTrue="{!or(
+															v.dataSource.Opportunity.Familia__c == 'Combustible', 
+															v.dataSource.Opportunity.Familia__c == 'Empresarial', 
+															v.dataSource.Opportunity.Familia__c == 'Mantenimiento')
+														}"> 
+															<th scope="col">
+																<div class="slds-truncate" title="Total Liberaciones a Crédito">Total Liberaciones a Crédito</div>
+															</th>
+														</aura:if>
+														<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+															<th scope="col">
+																<div class="slds-truncate" title="Total Liberaciones a Crédito">Total Liberaciones a Crédito</div>
+															</th>
+														</aura:if>
+														<aura:if isTrue="{!or(
+															v.dataSource.Opportunity.Familia__c == 'Combustible', 
+															v.dataSource.Opportunity.Familia__c == 'Empresarial', 
+															v.dataSource.Opportunity.Familia__c == 'Mantenimiento')
+														}"> 
+															<th scope="col">
+																<div class="slds-truncate" title="Total de Días de Exposición">Total de Días de Exposición</div>
+															</th>
+														</aura:if>
+														<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+															<th scope="col">
+																<div class="slds-truncate" title="Total de Días de Exposición">Total de Días de Exposición</div>
+															</th>
+														</aura:if>
+														<th scope="col">
+															<div class="slds-truncate" title="Valor Total de la Garantía">Valor Total de la Garantía</div>
+														</th>
+													</tr>
+													<aura:set attribute="else">
+														<th scope="col">
+															<div class="slds-truncate" title="Periodo de Liberación">Periodo de Liberación</div>
+														</th>
+														<th scope="col">
+															<div class="slds-truncate" title="Monto Liberado por Periodo">Monto Liberado por Periodo</div>
+														</th>
+														<th scope="col">
+															<div class="slds-truncate" title="Días de Crédito">Días de Crédito</div>
+														</th>
+														<th scope="col">
+															<div class="slds-truncate" title="Tipo de Garantía">Tipo de Garantía</div>
+														</th>
+														<th scope="col">
+															<div class="slds-truncate" title="Semanas de Crédito">Semanas de Crédito</div>
+														</th>
+														<th scope="col">
+															<div class="slds-truncate" title="Total Liberaciones a Crédito">Total Liberaciones a Crédito</div>
+														</th>
+														<th scope="col">
+															<div class="slds-truncate" title="Total de Días de Exposición">Total de Días de Exposición</div>
+														</th>
+														<th scope="col">
+															<div class="slds-truncate" title="Valor Total de la Garantía">Valor Total de la Garantía</div>
+														</th>
+													</aura:set>
+												</aura:if>
+											</aura:set>
+										</thead>
+										<tbody>
+											<aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c == '33' || v.NTT_IsProductMfa}">
+												<tr>
+													<td>
+														<label>{!v.dataSource.QuoteLineItem.GLB_LineaCreditoPreautorizada__c}</label>
+													</td>
+													<td>
+														<label>{!v.dataSource.QuoteLineItem.GLB_TerminoDePago__c}</label>
+													</td>
+													<td>
+														<label>{!v.dataSource.QuoteLineItem.WarrantyType__c}</label>
+													</td>
+													<td>
+														<label>
+															$
+															<lightning:formattedNumber value="{!v.dataSource.QuoteLineItem.WarrantyValue__c}"
+																maximumFractionDigits="2" minimumFractionDigits="2" />
+														</label>
+													</td>
+													<td>
+														<label>{!v.dataSource.QuoteLineItem.GLB_FechaFinGarantia__c}</label>
+													</td>
+													<td>
+														<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 1}">
+															<lightning:icon iconName="utility:record" size="x-small"
+																class="slds-align_absolute-center greenCircle" />
+														</aura:if>
+														<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 2}">
+															<lightning:icon iconName="utility:record" size="x-small"
+																class="slds-align_absolute-center yellowCircle" />
+														</aura:if>
+														<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 3}">
+															<lightning:icon iconName="utility:record" size="x-small"
+																class="slds-align_absolute-center redCircle" />
+														</aura:if>
+														<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 4}">
+															<lightning:icon iconName="utility:record" size="x-small"
+																class="slds-align_absolute-center grayCircle" />
+														</aura:if>
+													</td>
+												</tr>
+											</aura:if>
+											<aura:set attribute="else">
+												<aura:if isTrue="{!v.dataSource.QuoteLineItem.Quote.FechaCreacionModifica__c}">
+													<tr>
+														<aura:if isTrue="{!or(
+															v.dataSource.Opportunity.Familia__c == 'Combustible', 
+															v.dataSource.Opportunity.Familia__c == 'Empresarial')
+														}"> 
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.ReleasePeriod__c}</label>
+															</td>
+														</aura:if>
+														<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.ReleasePeriod__c}</label>
+															</td>
+														</aura:if>
+														<td>
+															<label>
+																$
+																<lightning:formattedNumber value="{!v.dataSource.QuoteLineItem.OperatingLine__c}"
+																	maximumFractionDigits="2" minimumFractionDigits="2" />
+															</label>
+														</td>
+														<td>
+															<label>{!v.dataSource.QuoteLineItem.CreditDays__c}</label>
+														</td>
+														<td>
+															<label>{!v.dataSource.QuoteLineItem.WarrantyType__c}</label>
+														</td>
+														<td>
+															<label>{!v.dataSource.QuoteLineItem.CreditWeeks__c}</label>
+														</td>
+														<aura:if isTrue="{!or(
+															v.dataSource.Opportunity.Familia__c == 'Combustible', 
+															v.dataSource.Opportunity.Familia__c == 'Empresarial')
+														}"> 
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.ReleasesNumber__c}</label>
+															</td>
+														</aura:if>
+														<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.ReleasesNumber__c}</label>
+															</td>
+														</aura:if>
+														<aura:if isTrue="{!or(
+															v.dataSource.Opportunity.Familia__c == 'Combustible', 
+															v.dataSource.Opportunity.Familia__c == 'Empresarial')
+														}"> 
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.TotalCreditDays__c}</label>
+															</td>
+														</aura:if>
+														<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.TotalCreditDays__c}</label>
+															</td>
+														</aura:if>
+														<td>
+															<label>
+																$
+																<lightning:formattedNumber value="{!v.dataSource.QuoteLineItem.WarrantyValue__c}"
+																	maximumFractionDigits="2" minimumFractionDigits="2" />
+															</label>
+														</td>
+													</tr>
+													<aura:set attribute="else">
+														<tr>
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.ReleasePeriod__c}</label>
+															</td>
+															<td>
+																<label>
+																	$
+																	<lightning:formattedNumber value="{!v.dataSource.QuoteLineItem.OperatingLine__c}"
+																		maximumFractionDigits="2" minimumFractionDigits="2" />
+																</label>
+															</td>
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.CreditDays__c}</label>
+															</td>
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.WarrantyType__c}</label>
+															</td>
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.CreditWeeks__c}</label>
+															</td>
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.ReleasesNumber__c}</label>
+															</td>
+															<td>
+																<label>{!v.dataSource.QuoteLineItem.TotalCreditDays__c}</label>
+															</td>
+															<td>
+																<label>
+																	$
+																	<lightning:formattedNumber value="{!v.dataSource.QuoteLineItem.WarrantyValue__c}"
+																		maximumFractionDigits="2" minimumFractionDigits="2" />
+																</label>
+															</td>
+														</tr>
+													</aura:set>
+												</aura:if>
+											</aura:set>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</aura:if>
+						<!--CEAM:3375 <<<-->
+						<span class="page-break"></span>
+						<aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+							<h3 class="slds-section-title--divider dividerTable">(Costos {!v.dataSource.Name}/{!v.dataSource.Product2__c.Name})</h3>
+						</aura:if>
+						<aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+							<h3 class="slds-section-title--divider dividerTable">Condiciones comerciales</h3>
+						</aura:if>
+						<div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+							<div class="slds-form-element">
+								<table class="slds-table slds-table_bordered slds-table_cell-buffer">
+									<thead>
+										<tr>
+											<th scope="col">
+												<div class="slds-truncate" title="Concepto">Concepto</div>
+											</th>
+											<th scope="col">
+												<div class="slds-truncate" title="Costo inicial">Costo inicial</div>
+											</th>
+											<th scope="col">
+												<div class="slds-truncate" title="Costo final">Costo final</div>
+											</th>
+											<aura:if isTrue="{!v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC'}">
+												<th scope="col">
+													<div class="slds-truncate" title="Moneda">Moneda</div>
+												</th>
+											</aura:if>
+											<th scope="col">
+												<div class="slds-truncate" title="%Descuento">Descuento</div>
+											</th>
+											<th scope="col">
+												<div class="slds-truncate" title="vigencia del descuento">Vigencia del descuento</div>
+											</th>
+											<!--NUEVA COLUMNA AGREGADA SOLO PARA ARG-->
+											<aura:if isTrue="{!v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC'}">
+												<th scope="col">
+													<div class="slds-truncate" title="nivel de aprobación">Nivel de aprobación</div>
+												</th>
+											</aura:if>
+											
+											<aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+												<!--AFILIADOS OPAM <th scope="col">
+													<div class="slds-truncate" title="#tarjetas">#Tarjetas</div>
+												</th>-->
+											</aura:if>
+											<aura:if isTrue="{!v.isRenegotiation}">
+												<!--CEAM:3563 >>>-->
+												<aura:iteration items="{!v.RenegotiationProducts}" var="rp">
+													<th class="" scope="col">
+														<div class="slds-truncate" title="{!rp.Name}">{!rp.Name}</div>
+													</th>
+												</aura:iteration>
+											</aura:if>
+											<!--CEAM:3563 <<<-->
+										</tr>
+									</thead>
+									<tbody>
+										<aura:iteration items="{!v.productosSource}" var="product" indexVar="index">
+											<aura:if isTrue="{!v.isRenegotiation}">
+												<aura:if isTrue="{!product.PrecioFinal__c != null}">
+													<tr>
+														<td>
+															<label>{!product.Concepto__r.TipoCargo__c}</label>
+														</td>
+														<td>
+															<aura:if isTrue="{!
+																product.Concepto__r.TipoCargo__c == 'Comisión por el servicio'  || 
+																product.Concepto__r.TipoCargo__c == 'Comisión por Servicio Telepeaje'
+															}">
+																<label>{!product.PrecioLista__c} %</label>
+																<aura:set attribute="else">
+																	<label>$ <lightning:formattedNumber value="{!product.PrecioLista__c}" maximumFractionDigits="2" minimumFractionDigits="2" /></label>
+																</aura:set>
+															</aura:if>
+															<!--<aura:if isTrue="{!product.Concepto__r.TipoCargo__c != 'Comisión por el servicio'}">
+																<label>$ <lightning:formattedNumber value="{!product.PrecioLista__c}" maximumFractionDigits="2" minimumFractionDigits="2" /></label>
+															</aura:if>-->
+														</td>
+														<td>
+															<aura:if isTrue="{!
+																product.Concepto__r.TipoCargo__c == 'Comisión por el servicio'  || 
+																product.Concepto__r.TipoCargo__c == 'Comisión por Servicio Telepeaje'
+															}">
+																<label>{!product.PrecioFinal__c} %</label>
+																<aura:set attribute="else">
+																	<label>$ <lightning:formattedNumber value="{!product.PrecioFinal__c}" maximumFractionDigits="2" minimumFractionDigits="2" /></label>
+																</aura:set>
+															</aura:if>
+															<!--<aura:if isTrue="{!product.Concepto__r.TipoCargo__c != 'Comisión por el servicio'}">
+																<label>$ <lightning:formattedNumber value="{!product.PrecioFinal__c}" maximumFractionDigits="2" minimumFractionDigits="2" /></label>
+															</aura:if>-->
+
+														</td>
+														<td>
+															<!-- <label>{!product.Bonificacion__c} %</label>  -->
+															<!-- REDONDEO PORCENTAJE -->
+															<label><lightning:formattedNumber value="{!product.Bonificacion__c}" maximumFractionDigits="2" minimumFractionDigits="2" />%</label>
+														</td>
+														<td>
+															<label>{!product.VigenciaDescuento__c}</label>
+														</td>
+														<aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c}">
+															<!--AFILIADOS OPAM <td>
+																<label>{!product.CantidadTarjetas__c}</label>
+															</td>-->
+														</aura:if>
+														<aura:iteration items="{!v.RenegotiationProductConcept}" var="rpc">
+															<aura:if isTrue="{!rpc.Concept__c == product.Concepto__c}">
+																<th data-label="Concepto" scope="row">
+																	<aura:if isTrue="{!index == 0}">
+																		<span class="renderValPDF">{!rpc.FinalPrice__c} %</span>
+																		<div class="slds-truncate" title="Concept">
+																			<lightning:formattedNumber value="{!rpc.FinalPrice__c}" maximumFractionDigits="2" minimumFractionDigits="2"> %</lightning:formattedNumber>
+																		</div>
+																	</aura:if>
+																	<aura:if isTrue="{!index != 0}">
+																		<span class="renderValPDF">$ {!rpc.FinalPrice__c} </span>
+																		<div class="slds-truncate renderNonePDF" title="Concept">$
+																			<lightning:formattedNumber value="{!rpc.FinalPrice__c}" maximumFractionDigits="2" minimumFractionDigits="2" />
+																		</div>
+																	</aura:if>
+																</th>
+															</aura:if>
+														</aura:iteration>
+													</tr>
+												</aura:if>
+												<aura:set attribute="else">
+													<tr>
+														<td>
+															<label>{!product.Concepto__r.TipoCargo__c}</label>
+														</td>
+														
+														<td>
+															<aura:if isTrue="{! v.isProductArgentina &amp;&amp; (product.Concepto__r.TipoCargo__c == 'Move for good 100%'
+																|| product.Concepto__r.TipoCargo__c == 'Move for good 50%')
+															}">
+																<aura:set attribute="else">
+																	<aura:if isTrue="{!
+																		product.Concepto__r.TipoCargo__c == 'Comisión por el servicio' || 
+																		product.Concepto__r.TipoCargo__c == '% Participación' || 
+																		product.Concepto__r.TipoCargo__c == 'Comisión por Servicio Telepeaje' ||
+																		product.Concepto__r.TipoCargo__c == 'Retribución por nuestra gestión (FEE)'
+																	}">
+																		<label>{!product.Concepto__r.TipoCargo__c == 'Retribución por nuestra gestión (FEE)' ? '': product.PrecioLista__c} %</label>
+																		<aura:set attribute="else">
+																			<label>$ {!product.PrecioLista__c}</label>
+																		</aura:set>
+																	</aura:if>
+																	
+																	<!--<aura:if isTrue="{!and(product.Concepto__r.TipoCargo__c != 'Comisión por el servicio', product.Concepto__r.TipoCargo__c != '% Participación') }">
+																		<label>$ {!product.PrecioLista__c}</label>
+																	</aura:if>-->
+																</aura:set>
+															</aura:if>
+														</td>
+														<td>
+															<aura:if isTrue="{! v.isProductArgentina &amp;&amp; (product.Concepto__r.TipoCargo__c == 'Move for good 100%'
+																|| product.Concepto__r.TipoCargo__c == 'Move for good 50%')
+															}">
+																<aura:set attribute="else">
+																	<aura:if isTrue="{!
+																		product.Concepto__r.TipoCargo__c == 'Comisión por el servicio'  || 
+																		product.Concepto__r.TipoCargo__c == '% Participación' || 
+																		product.Concepto__r.TipoCargo__c == 'Comisión por Servicio Telepeaje' ||
+																		product.Concepto__r.TipoCargo__c == 'Retribución por nuestra gestión (FEE)'
+																	}">
+																		<label>{!product.PrecioFinal__c} %</label>
+																		<aura:set attribute="else">
+																			<label>$ {!product.PrecioFinal__c}</label>
+																		</aura:set>
+																	</aura:if>
+																</aura:set>
+																
+															</aura:if>
+															
+															
+															<!--<aura:if isTrue="{!and(product.Concepto__r.TipoCargo__c != 'Comisión por el servicio', product.Concepto__r.TipoCargo__c != '% Participación')}">
+																<label>$ {!product.PrecioFinal__c}</label>
+															</aura:if>-->
+
+														</td>
+														<aura:if isTrue="{!v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC'}">
+															<td>
+																<label>{!product.Concepto__r.GLBAr_Currency__c}</label>
+															</td>
+														</aura:if>
+														<td>
+															<aura:if isTrue="{! v.isProductArgentina &amp;&amp; (product.Concepto__r.TipoCargo__c == 'Move for good 100%'
+																|| product.Concepto__r.TipoCargo__c == 'Move for good 50%')
+															}">
+																<aura:set attribute="else">
+																	<label>{!product.Concepto__r.TipoCargo__c == 'Retribución por nuestra gestión (FEE)' ? '': product.Bonificacion__c} %</label>
+																</aura:set>
+															</aura:if>
+															
+														</td>
+														<td>
+															<label>{!product.VigenciaDescuento__c}</label>
+														</td>
+														<!--NUEVA COLUMNA AGREGADA SOLO PARA ARG-->
+														<aura:if isTrue="{!v.dataSource.Product2__c.ProductCode == 'XC' || v.dataSource.Product2__c.ProductCode == 'YC'}">
+															<!--En este aura:if excluir conceptos -->
+															<td>
+															<aura:if isTrue="{!product.Concepto__r.TipoCargo__c != 'Costo de implementación' 
+																&amp;&amp; product.Concepto__r.TipoCargo__c != 'Retribución por nuestra gestión (FEE)'
+																&amp;&amp; product.Concepto__r.TipoCargo__c != 'Move for good 100%'
+																&amp;&amp; product.Concepto__r.TipoCargo__c != 'Move for good 50%'
+															}">
+																<!--Agregar condicion para circulo verde-->
+																<aura:if isTrue="{!product.Bonificacion__c lt 1}">
+																	
+																		<lightning:icon iconName="utility:record" size="x-small"
+																		class="slds-align_absolute-center greenCircle" />
+																	
+																</aura:if>
+																<!--Agregar condicion para circulo amarillo-->
+																<aura:if isTrue="{!AND(product.Bonificacion__c lt 26, product.Bonificacion__c gt 0)}">
+																	
+																		<lightning:icon iconName="utility:record" size="x-small"
+																		class="slds-align_absolute-center yellowCircle" />
+																	
+																</aura:if>
+																<!--Agregar condicion para circulo rojo-->
+																<aura:if isTrue="{!AND(product.Bonificacion__c gt 25, product.Bonificacion__c lt 51)}">
+																	
+																		<lightning:icon iconName="utility:record" size="x-small"
+																		class="slds-align_absolute-center redCircle" />
+																	
+																</aura:if>
+																<!--Agregar condicion para circulo gris-->
+																<aura:if isTrue="{!AND(product.Bonificacion__c gt 50, product.Bonificacion__c lt 101)}">
+																	
+																		<lightning:icon iconName="utility:record" size="x-small"
+																		class="slds-align_absolute-center grayCircle" />
+																	
+																</aura:if>
+															</aura:if>
+															</td>
+														</aura:if>
+														<aura:if isTrue="{!!v.dataSource.Product2__c.IsAffiliate__c &amp;&amp; v.dataSource.Product2__c.ProductCode != 'XC' &amp;&amp; v.dataSource.Product2__c.ProductCode != 'YC'}">
+															<td>
+																<label>{!product.CantidadTarjetas__c}</label>
+															</td>
+														</aura:if>
+													</tr>
+												</aura:set>
+											</aura:if>
+										</aura:iteration>
+									</tbody>
+								</table>
+							</div>
+						</div>
+    				</lightning:layoutItem>
+    			</lightning:layout>
+    		</aura:if>
+			<aura:if isTrue="{!and(
+				v.dataSource.Opportunity.RecordType.DeveloperName=='RT_Renegotiation',
+				v.isApprovalQuote)
+			}">
+				<!--CEAM:3563-->
+				<div class="separador"></div>
+				<div class="slds-section slds-is-open slds-p-top_medium">
+					<h3 class="slds-section__title slds-theme_shade">
+						<span class="slds-truncate slds-p-horizontal_small" title="funcionalidades">
+							Aprobación de Cotización
+						</span>
+					</h3>
+				</div>
+				<div class="slds-m-around_medium">
+					<div class="slds-grid slds-gutters slds-m-bottom_medium">
+						<div class="slds-col slds-size_1-of-3">
+							<span>Segmento:<br />
+								<aura:unescapedHtml value="{!v.dataSource.Account.Segmento_Logo__c}" />
+							</span>
+						</div>
+						<div class="slds-col slds-size_1-of-3">
+							<span class="renderValPDF" style="display: none;">BU:<br />
+								<aura:unescapedHtml value="{!v.BusinessUnit}" />
+							</span>
+							<span class="renderNonePDF">BU:<br />
+								<aura:unescapedHtml value="{!v.dataSource.Account.Busines__c}" />
+							</span>
+						</div>
+						<div class="slds-col slds-size_1-of-3">
+							<span class="renderValPDF" style="display: none;">BU:<br />
+								<aura:unescapedHtml value="{!v.Canal}" />
+							</span>
+							<span class="renderNonePDF">Canal:<br />
+								<aura:unescapedHtml value="{!v.dataSource.Account.Ejecutivo_Logo__c}" />
+							</span>
+						</div>
+					</div>
+					<span>Volumen de la cuenta: <span class="blue">
+							<lightning:formattedNumber value="{!v.dataSource.Account.Sum_turnover_volume__c}"
+								maximumFractionDigits="2" minimumFractionDigits="2" />
+						</span></span>
+					<div class="slds-grid slds-gutters slds-m-bottom_medium">
+						<div class="slds-col slds-size_1-of-2">
+							<span>Sector: <span class="blue">{!v.dataSource.Account.Sector__c}</span></span><br />
+							<span>Giro: <span class="blue">{!v.dataSource.Account.Giro__c}</span></span><br />
+							<span>Días transcurridos de la opp: <span class="blue">{!v.dataSource.Opportunity.Elapsed_days__c}
+									días</span></span><br />
+						</div>
+						<div class="slds-col slds-size_1-of-2">
+							<span>Tipo de oportunidad: <span
+									class="blue">{!v.dataSource.Opportunity.RecordType.Name}</span></span><br />
+							<span>Gestor: <span class="blue">{!v.dataSource.Opportunity.Gestor__c}</span></span><br />
+							<span>Tipo de Venta: <span class="blue">{!v.dataSource.Opportunity.TipoVenta__c}</span></span><br />
+							<span>Tipo de Renegociación: <span
+									class="blue">{!v.dataSource.Opportunity.RenegotiationType__c}</span></span><br />
+						</div>
+					</div>
+					<aura:if isTrue="{!v.submitterComment}">
+						<div class="slds-text-title_bold slds-m-bottom_medium">
+							<p>Comentarios del emisor {!v.dataSource.Owner.Name}: <span
+									class="blue">{!v.submitterComment}</span></p>
+						</div>
+					</aura:if>
+					<aura:if isTrue="{!v.lastComments}">
+						<div class="slds-text-title_bold slds-m-top_medium">
+							Comentarios de aprobadores anteriores
+						</div>
+						<ui:scrollerWrapper>
+							<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered">
+								<thead>
+									<tr class="slds-line-height_reset">
+										<th class="" scope="col">
+											<div class="slds-truncate black" title="Opportunity Name">Aprobador</div>
+										</th>
+										<th class="" scope="col">
+											<div class="slds-truncate black" title="Opportunity Name">Comentario</div>
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									<aura:iteration items="{!v.lastComments}" var="item" indexVar="index">
+										<tr class="slds-hint-parent">
+											<th data-label="Aprobador" scope="row">
+												<div class="slds-truncate bold" title="Cloudhub">
+													{!index+1}&nbsp;{!item.Actor.Name}</div>
+											</th>
+											<td data-label="Comentario">
+												<div class="slds-truncate" title="Cloudhub">{!item.Comments}</div>
+											</td>
+										</tr>
+									</aura:iteration>
+								</tbody>
+							</table>
+						</ui:scrollerWrapper>
+					</aura:if>
+				</div>
+				<aura:if isTrue="{!v.dataSource.QuoteLineItem.PaymentMethod__c == 'Pospago'}">
+					<span class="page-break"></span>
+					<div class="slds-text-title_bold slds-m-top_medium">
+						Modalidad de Pago
+					</div>
+					<div class="slds-scrollable">
+						<div class="slds-form-element">
+							<table class="slds-table slds-table_bordered slds-table_cell-buffer">
+								<thead>
+									<aura:if isTrue="{!v.dataSource.QuoteLineItem.Quote.FechaCreacionModifica__c}">
+												<tr>
+													<aura:if isTrue="{!or(
+														v.dataSource.Opportunity.Familia__c == 'Combustible', 
+														v.dataSource.Opportunity.Familia__c == 'Empresarial')
+													}"> 
+													<th scope="col">
+														<div class="slds-truncate" title="Periodo de Liberación">Periodo de Liberación</div>
+													</th>
+													</aura:if> 
+													<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+													<th scope="col">
+														<div class="slds-truncate" title="Periodo de Liberación">Periodo de Liberación</div>
+													</th>
+													</aura:if>
+													<aura:if isTrue="{!or(
+														v.dataSource.Opportunity.Familia__c == 'Vestimenta', 
+														v.dataSource.Opportunity.Familia__c == 'Ticket Restaurante')
+													}"> 
+													<th scope="col">
+														<div class="slds-truncate" title="Limite de Credito">Límite de Crédito</div>
+													</th>
+													</aura:if>
+													<aura:if isTrue="{!or(
+														v.dataSource.Opportunity.Familia__c == 'Regalo', 
+														v.dataSource.Opportunity.Familia__c == 'Despensa')
+													}">  
+													<th scope="col">
+														<div class="slds-truncate" title="Limite de Credito">Límite de Crédito</div>
+													</th>
+													</aura:if>
+													<aura:if isTrue="{!or(
+														v.dataSource.Opportunity.Familia__c == 'Combustible', 
+														v.dataSource.Opportunity.Familia__c == 'Empresarial', 
+														v.dataSource.Opportunity.Familia__c == 'Mantenimiento')
+													}"> 
+													<th scope="col">
+														<div class="slds-truncate" title="Periodo de Liberación">Monto Liberado por Periodo</div>
+													</th>
+													</aura:if>
+													<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+													<th scope="col">
+														<div class="slds-truncate" title="Periodo de Liberación">Monto Liberado por Periodo</div>
+													</th>
+													</aura:if>
+													<th scope="col">
+														<div class="slds-truncate" title="Días de Crédito">Días de Crédito</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate" title="Tipo de Garantía">Tipo de Garantía</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate" title="Semanas de Crédito">Semanas de Crédito</div>
+													</th>
+													<aura:if isTrue="{!or(
+														v.dataSource.Opportunity.Familia__c == 'Combustible', 
+														v.dataSource.Opportunity.Familia__c == 'Empresarial', 
+														v.dataSource.Opportunity.Familia__c == 'Mantenimiento')
+													}"> 
+													<th scope="col">
+														<div class="slds-truncate" title="Total Liberaciones a Crédito">Total Liberaciones a Crédito</div>
+													</th>
+													</aura:if>
+													<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+													<th scope="col">
+														<div class="slds-truncate" title="Total Liberaciones a Crédito">Total Liberaciones a Crédito</div>
+													</th>
+													</aura:if>
+													<aura:if isTrue="{!or(
+														v.dataSource.Opportunity.Familia__c == 'Combustible', 
+														v.dataSource.Opportunity.Familia__c == 'Empresarial', 
+														v.dataSource.Opportunity.Familia__c == 'Mantenimiento')
+													}"> 
+													<th scope="col">
+														<div class="slds-truncate" title="Total de Días de Exposición">Total de Días de Exposición</div>
+													</th>
+													</aura:if>
+													<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+													<th scope="col">
+														<div class="slds-truncate" title="Total de Días de Exposición">Total de Días de Exposición</div>
+													</th>
+													</aura:if>
+													<th scope="col">
+														<div class="slds-truncate" title="Valor Total de la Garantía">Valor Total de la
+															Garantía</div>
+													</th>
+													<th class="" scope="col">
+														<div class="slds-truncate">Pre-Análisis</div>
+													</th>
+												</tr>
+										<aura:set attribute="else">
+												<tr>
+													<th scope="col">
+														<div class="slds-truncate" title="Periodo de Liberación">Periodo de Liberación</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate" title="Monto Liberado por Periodo">Monto Liberado por
+															Periodo</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate" title="Días de Crédito">Días de Crédito</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate" title="Tipo de Garantía">Tipo de Garantía</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate" title="Semanas de Crédito">Semanas de Crédito</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate" title="Total Liberaciones a Crédito">Total Liberaciones a
+															Crédito</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate" title="Total de Días de Exposición">Total de Días de
+															Exposición</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate" title="Valor Total de la Garantía">Valor Total de la
+															Garantía</div>
+													</th>
+													<th class="" scope="col">
+														<div class="slds-truncate">Pre-Análisis</div>
+													</th>
+												</tr>
+										</aura:set>
+										</aura:if>
+								</thead>
+								<tbody>
+									<aura:if isTrue="{!v.dataSource.QuoteLineItem.Quote.FechaCreacionModifica__c}">
+											<tr>
+												<aura:if isTrue="{!or(
+													v.dataSource.Opportunity.Familia__c == 'Combustible', 
+													v.dataSource.Opportunity.Familia__c == 'Empresarial')
+												}"> 
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.ReleasePeriod__c}</label>
+												</td>
+												</aura:if>
+												<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.ReleasePeriod__c}</label>
+												</td>
+												</aura:if>
+												<td>
+													<label>
+														$
+														<lightning:formattedNumber
+															value="{!v.dataSource.QuoteLineItem.OperatingLine__c}"
+															maximumFractionDigits="2" minimumFractionDigits="2" />
+													</label>
+												</td>
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.CreditDays__c}</label>
+												</td>
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.WarrantyType__c}</label>
+												</td>
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.CreditWeeks__c}</label>
+												</td>
+												<aura:if isTrue="{!or(
+													v.dataSource.Opportunity.Familia__c == 'Combustible', 
+													v.dataSource.Opportunity.Familia__c == 'Empresarial')
+												}"> 
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.ReleasesNumber__c}</label>
+												</td>
+												</aura:if>
+												<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.ReleasesNumber__c}</label>
+												</td>
+												</aura:if>
+												<aura:if isTrue="{!or(
+													v.dataSource.Opportunity.Familia__c == 'Combustible', 
+													v.dataSource.Opportunity.Familia__c == 'Empresarial')
+												}"> 
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.TotalCreditDays__c}</label>
+												</td>
+												</aura:if>
+												<aura:if isTrue="{!v.dataSource.Opportunity.Familia__c == 'Mantenimiento'}"> 
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.TotalCreditDays__c}</label>
+												</td>
+												</aura:if>
+												<th data-label="Valor de la Garantía" scope="row">
+													$
+													<lightning:formattedNumber value="{!v.dataSource.QuoteLineItem.WarrantyValue__c}"
+														maximumFractionDigits="2" minimumFractionDigits="2" />
+												</th>
+												<td data-label="Pre-Análisis">
+													<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 1}">
+														<lightning:icon iconName="utility:record" size="x-small"
+															class="slds-align_absolute-center greenCircle" />
+													</aura:if>
+													<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 2}">
+														<lightning:icon iconName="utility:record" size="x-small"
+															class="slds-align_absolute-center yellowCircle" />
+													</aura:if>
+													<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 3}">
+														<lightning:icon iconName="utility:record" size="x-small"
+															class="slds-align_absolute-center redCircle" />
+													</aura:if>
+													<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 4}">
+														<lightning:icon iconName="utility:record" size="x-small"
+															class="slds-align_absolute-center grayCircle" />
+													</aura:if>
+												</td>
+											</tr>
+										<aura:set attribute="else">
+											<tr>
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.ReleasePeriod__c}</label>
+												</td>
+												<td>
+													<label>
+														$
+														<lightning:formattedNumber
+															value="{!v.dataSource.QuoteLineItem.OperatingLine__c}"
+															maximumFractionDigits="2" minimumFractionDigits="2" />
+													</label>
+												</td>
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.CreditDays__c}</label>
+												</td>
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.WarrantyType__c}</label>
+												</td>
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.CreditWeeks__c}</label>
+												</td>
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.ReleasesNumber__c}</label>
+												</td>
+												<td>
+													<label>{!v.dataSource.QuoteLineItem.TotalCreditDays__c}</label>
+												</td>
+												<th data-label="Valor de la Garantía" scope="row">
+													$
+													<lightning:formattedNumber value="{!v.dataSource.QuoteLineItem.WarrantyValue__c}"
+														maximumFractionDigits="2" minimumFractionDigits="2" />
+												</th>
+												<td data-label="Pre-Análisis">
+													<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 1}">
+														<lightning:icon iconName="utility:record" size="x-small"
+															class="slds-align_absolute-center greenCircle" />
+													</aura:if>
+													<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 2}">
+														<lightning:icon iconName="utility:record" size="x-small"
+															class="slds-align_absolute-center yellowCircle" />
+													</aura:if>
+													<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 3}">
+														<lightning:icon iconName="utility:record" size="x-small"
+															class="slds-align_absolute-center redCircle" />
+													</aura:if>
+													<aura:if isTrue="{!v.dataSource.QuoteLineItem.PreAnalysis__c == 4}">
+														<lightning:icon iconName="utility:record" size="x-small"
+															class="slds-align_absolute-center grayCircle" />
+													</aura:if>
+												</td>
+											</tr>
+										</aura:set>
+										</aura:if>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</aura:if>
+				<div class="slds-text-title_bold slds-m-top_medium">
+					Costos Cotización
+				</div>
+				<ui:scrollerWrapper>
+					<table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered">
+						<thead>
+							<tr class="slds-line-height_reset">
+								<th class="" scope="col">
+									<div class="slds-truncate" title="Concept">Concepto</div>
+								</th>
+								<th class="" scope="col">
+									<div class="slds-truncate" title="Suggested price">Precio sugerido</div>
+								</th>
+								<th class="" scope="col">
+									<div class="slds-truncate" title="Final price">Costo final</div>
+								</th>
+								<th class="" scope="col">
+									<div class="slds-truncate" title="Discount">% Descuento</div>
+								</th>
+								<th class="" scope="col">
+									<div class="slds-truncate" title="Validity by date">Vigencia por Fecha</div>
+								</th>
+								<th class="renderNonePDF" scope="col">
+									<div class="slds-truncate" title="Approval level">Nivel de aprobación</div>
+								</th>
+								<aura:if isTrue="{!v.isRenegotiation}">
+									<!--CEAM:3563 >>>-->
+									<aura:iteration items="{!v.RenegotiationProducts}" var="rp">
+										<th class="" scope="col">
+											<div class="slds-truncate" title="Approval level">{!rp.Name}</div>
+										</th>
+									</aura:iteration>
+								</aura:if>
+								<!--CEAM:3563 <<<-->
+							</tr>
+						</thead>
+						<tbody>
+							<aura:iteration items="{!v.productosSource}" var="item" indexVar="index">
+								<aura:if isTrue="{!item.PrecioFinal__c != null}">
+									<tr class="slds-hint-parent">
+										<th data-label="Concepto" scope="row">
+											<div class="slds-truncate" title="Concept">{!item.Concepto__r.TipoCargo__c}</div>
+										</th>
+										<td data-label="Precio sugerido" scope="row">
+											<aura:if isTrue="{!item.Concepto__r.TipoCargo__c == 'Comisión por el servicio'}">
+												<span class="renderValPDF" style="display: none;">{!item.PrecioLista__c}
+													%</span>
+												<lightning:formattedNumber value="{!item.PrecioLista__c}"
+													maximumFractionDigits="2" minimumFractionDigits="2"> %
+												</lightning:formattedNumber>
+												<aura:set attribute="else">
+													<span class="renderValPDF" style="display: none;">$ {!item.PrecioLista__c}
+													</span>
+													<span class="renderNonePDF">$
+														<lightning:formattedNumber value="{!item.PrecioLista__c}" maximumFractionDigits="2" minimumFractionDigits="2"/>
+													</span>
+												</aura:set>
+											</aura:if>
+										</td>
+										<td data-label="Costo final">
+											<aura:if isTrue="{!item.Concepto__r.TipoCargo__c == 'Comisión por el servicio'}">
+												<span class="renderValPDF" style="display: none;">{!item.PrecioFinal__c}
+													%</span>
+												<lightning:formattedNumber value="{!item.PrecioFinal__c}"
+													maximumFractionDigits="2" minimumFractionDigits="2"> %
+												</lightning:formattedNumber>
+												<aura:set attribute="else">
+													<span class="renderValPDF" style="display: none;">$ {!item.PrecioFinal__c}</span>
+													<span class="renderNonePDF">$<lightning:formattedNumber value="{!item.PrecioFinal__c}" maximumFractionDigits="2" minimumFractionDigits="2"/>
+													</span>
+												</aura:set>
+											</aura:if>
+										</td>
+										<td data-label="% Descuento">
+											<span class="renderValPDF" style="display: none;">{!item.Bonificacion__c} %</span>
+											<lightning:formattedNumber value="{!item.Bonificacion__c}" maximumFractionDigits="2" minimumFractionDigits="2"> % </lightning:formattedNumber>
+										</td>
+										<td data-label="Vigencia por Fecha">
+											<span class="renderValPDF"
+												style="display: none;">{!item.VigenciaDescuento__c}</span>
+											<div class="slds-truncate" title="Validity by date">
+												<lightning:formattedDateTime value="{!item.VigenciaDescuento__c}" day="2-digit"
+													month="2-digit" year="numeric" timeZone="UTC" />
+											</div>
+										</td>
+										<td data-label="Nivel de aprobación" class="renderNonePDF">
+											<!--<aura:if isTrue="{!or(and(item.ApprovalLevel__c == 1, item.Bonificacion__c > 0), and(!!item.ApprovalLevel__c, item.ApprovalLevel__c == null, item.Bonificacion__c > 0,v.isRenegotiation))}">
+														<lightning:icon iconName="utility:record" size="x-small" class="slds-align_absolute-center greenCircle"/>
+													</aura:if>
+													<aura:if isTrue="{!or(and(item.ApprovalLevel__c == 2, item.Bonificacion__c > 0), and(item.ApprovalLevel__c == null, item.Bonificacion__c > 0,v.isRenegotiation))}">
+														<lightning:icon iconName="utility:record" size="x-small" class="slds-align_absolute-center yellowCircle"/>
+													</aura:if>   
+													<aura:if isTrue="{!or(and(item.ApprovalLevel__c == 3, item.Bonificacion__c > 0), and(!!item.ApprovalLevel__c, item.ApprovalLevel__c == null, item.Bonificacion__c > 0,v.isRenegotiation))}">
+														<lightning:icon iconName="utility:record" size="x-small" class="slds-align_absolute-center redCircle"/>
+													</aura:if>   
+													<aura:if isTrue="{!or(and(item.ApprovalLevel__c == 4, item.Bonificacion__c > 0), and(!!item.ApprovalLevel__c, item.ApprovalLevel__c == null, item.Bonificacion__c > 0,v.isRenegotiation))}">
+														<lightning:icon iconName="utility:record" size="x-small" class="slds-align_absolute-center grayCircle"/>
+													</aura:if>-->
+											<aura:iteration items="{!v.RenegotiationProductConcept}" var="rpc">
+												<aura:if isTrue="{!rpc.Concept__c == item.Concepto__c}">
+													<aura:if isTrue="{!rpc.FinalPrice__c > item.PrecioFinal__c}">
+														<lightning:icon iconName="utility:record" size="x-small"
+															class="slds-align_absolute-center grayCircle" />
+													</aura:if>
+												</aura:if>
+											</aura:iteration>
+										</td>
+										<aura:iteration items="{!v.RenegotiationProductConcept}" var="rpc">
+											<aura:if isTrue="{!rpc.Concept__c == item.Concepto__c}">
+												<th data-label="Concepto" scope="row">
+													<aura:if isTrue="{!index == 0}">
+														<span class="renderValPDF" style="display: none;">{!rpc.FinalPrice__c}
+															%</span>
+														<div class="slds-truncate" title="Concept">
+															<lightning:formattedNumber value="{!rpc.FinalPrice__c}"
+																maximumFractionDigits="2" minimumFractionDigits="2" /> %
+														</div>
+													</aura:if>
+													<aura:if isTrue="{!index != 0}">
+														<span class="renderValPDF" style="display: none;">$
+															{!rpc.FinalPrice__c}</span>
+														<div class="slds-truncate" title="Concept"><span class="renderNonePDF">$
+																<lightning:formattedNumber value="{!rpc.FinalPrice__c}"
+																	maximumFractionDigits="2" minimumFractionDigits="2" />
+															</span></div>
+													</aura:if>
+												</th>
+											</aura:if>
+										</aura:iteration>
+									</tr>
+								</aura:if>
+							</aura:iteration>
+						</tbody>
+					</table>
+				</ui:scrollerWrapper>
+				<div class="separador"></div>
+			</aura:if>
+			<aura:if isTrue="{!or(
+				v.dataSource.Opportunity.RecordType.DeveloperName!='RT_Renegotiation', 
+					(
+						v.isProductFleet &amp;&amp;
+            v.dataSource.Opportunity.GLB_Cambio_Condiciones_Facturacion__c &amp;&amp;
+            v.dataSource.Opportunity.RecordType.DeveloperName=='RT_Renegotiation'
+					)
+			)}">
+				<!--CEAM:3563-->
+				<div class="separador"></div>
+				<c:AltaContratoADV aura:id="camposCon" recordId="{!v.dataSource.QuoteLineItem.Id}" />
+				<aura:if isTrue="{!v.dataSource.Opportunity.RecordType.DeveloperName=='RT_Renegotiation'}">
+					<div>
+						<div class="slds-m-around_medium">
+							<div class="seccionDiv">
+								<h2 style="padding-left:1em;" class="slds-text-heading_small">
+									Cliente por Actualizar
+								</h2>
+							</div>
+							<div class="slds-grid slds-wrap">
+								<div class="slds-col slds-size_6-of-12 slds-p-around_medium">
+									<div>Contrato Filial</div>
+								</div>
+								<div class="slds-col slds-size_6-of-12 slds-p-around_medium">
+									<div>Id Cuenta</div>
+								</div>
+							</div>
+							<div class="slds-grid slds-wrap">
+								<aura:iteration items="{!v.subcuentasAdicionales}" var="subcuenta">
+									<div class="slds-col slds-size_1-of-2 slds-p-horizontal_medium">
+										{!subcuenta.GLB_Unique_ID_Generator__c}
+									</div>
+									<div class="slds-col slds-size_1-of-2 slds-p-horizontal_medium">
+										{!subcuenta.GLB_ID_Cuenta__c}
+									</div>
+								</aura:iteration>
+							</div>
+						</div>
+					</div>
+				</aura:if>
+			</aura:if>
+			<aura:if isTrue="{!v.historicoMotivosRechazo.length > 0}">
+				<h3 class="slds-section-title--divider dividerTable">Última solicitud.</h3>
+				<aura:iteration items="{!v.historicoMotivosRechazo}" var="rechazo">
+					<lightning:layout>
+						<lightning:layoutItem flexibility="auto" class="slds-p-horizontal_medium slds-p-top_medium">
+							<lightning:input disabled="true" type="text" label="Estatus" name="Estatus"
+								value="{!rechazo.Opportunity_status__c}" />
+						</lightning:layoutItem>
+						<lightning:layoutItem flexibility="auto" class="slds-p-horizontal_medium slds-p-top_medium">
+							<lightning:input disabled="true" type="text" label="Motivo de rechazo" name="MotivoRechazo"
+								value="{!rechazo.Rejection_Reason__c}" />
+						</lightning:layoutItem>
+						<lightning:layoutItem flexibility="auto" class="slds-p-horizontal_medium slds-p-top_medium">
+							<lightning:input disabled="true" type="text" label="Comentarios del comercial para ADC"
+								name="comentariosComercial" value="{!rechazo.Comercial_comments__c}" />
+						</lightning:layoutItem>
+						<lightning:layoutItem flexibility="auto" class="slds-p-horizontal_medium slds-p-top_medium">
+							<div class="row">
+								<p class="header">Fecha inicio ADV</p>
+								<lightning:input variant="label-hidden" type="datetime" disabled="true" name="fechaInicio"
+									value="{!rechazo.ADV_Start_Date__c}" />
+							</div>
+						</lightning:layoutItem>
+					</lightning:layout>
+				</aura:iteration>
+			</aura:if>
+			<aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+				<div class="separador" id="separadorEL"></div>
+				<div class="slds-section slds-is-open slds-p-top_medium" id="sectionEL">
+					<h3 class="slds-section__title slds-theme_shade">
+						<span class="slds-truncate slds-p-horizontal_small tableFontSize" title="funcionalidades">
+							Información de ADC
+						</span>
+					</h3>
+				</div>
+			</aura:if>
+			<lightning:layout>
+				<lightning:layoutItem flexibility="auto" size="12" class="slds-p-horizontal_medium slds-p-top_medium">
+					<lightning:textarea name="comentariosAdministracion"
+						value="{!v.dataSource.Opportunity.Comentarios_Ejecutivo__c}" label="Comentarios del Comercial para ADC"
+						maxlength="300" />
+					<div class="slds-m-top_xx-small slds-m-bottom_xx-small">
+						<lightning:dualListbox aura:id="motivosDeRechazo" disableReordering="true" name="motivosRechazo"
+							label="Motivos de Rechazo" sourceLabel="Disponibles" selectedLabel="Seleccionados"
+							options="{!v.motivosRechazoList}" value="{!v.motivosRechazoSelec}" />
+					</div>
+					<aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+						<lightning:textarea name="comentariosAdministracion"
+							value="{!v.dataSource.Contrato2__c.Comentarios_ADV__c}"
+							label="Comentarios Administración de contratos" maxlength="300" />
+						<aura:set attribute="else">
+							<lightning:textarea name="comentariosAdministracion"
+								value="{!v.dataSource.Contrato2__c.Comentarios_ADV__c}"
+								label="Comentarios Administración de ventas" maxlength="300" />
+						</aura:set>
+					</aura:if>
+				</lightning:layoutItem>
+				
+			</lightning:layout>
+			<aura:if isTrue="{!(v.updateClientMercedesAvailable &amp;&amp; v.dataSource.Opportunity.RecordType.DeveloperName == 'RT_Renegotiation')}">
+				<lightning:layout>
+					<!-- <lightning:layoutItem flexibility="auto" size="12" class="slds-p-horizontal_medium tableFontSize"> -->
+					<table class="slds-table slds-table_bordered slds-table_cell-buffer tableFontSize" id="tableEL" style="text-align:center;">
+						
+							<!-- boton actualizar cliente -->
+						<div class="separador" id="separadorEL"></div>
+						<tr>
+							<td colspan="12">
+								<div aura:id="messageContainer">
+									{!v.messageComponent}
+								</div>
+								<center>
+									<!-- disabled="{!not(v.btnInactive)}"  -->
+									<lightning:button label="Enviar a actualización" 
+										variant="success"
+										disabled="{!(!v.btnInactive || v.sent2Mercedes)}"
+										onclick="{!c.actualizarClienteRenegociado}" 
+									/>                 
+								</center>
+							</td>
+						</tr>
+						
+					</table>
+					<!-- </lightning:layoutItem> -->
+				</lightning:layout>
+			</aura:if>
+			<aura:if isTrue="{!v.dataSource.Product2__c.IsAffiliate__c}">
+				<div class="separador" id="separadorEL"></div>
+				<div class="slds-section slds-is-open slds-p-top_medium" id="sectionEL">
+					<h3 class="slds-section__title slds-theme_shade">
+						<span class="slds-truncate slds-p-horizontal_small tableFontSize" title="funcionalidades">
+							Documentos a ADC
+						</span>
+					</h3>
+				</div>
+			</aura:if>
+    	</div>
+		<div>
+			<lightning:buttonGroup class="button-group-container">
+				<!-- disabled="{!v.btnInactive}"-->
+				<aura:if isTrue="{!v.dataSource.QuoteLineItem.Product2.IDInterno__c == '29-P'}">
+                    <button disabled="{!v.btnInactive}" class="slds-button slds-button_icon slds-button_icon-border-filled button-size" onclick="{!c.gestionaMoPayActivoAprov}">
+						<lightning:icon iconName="utility:success" title="Aprobar" class="finish-button" />
+						<aura:if isTrue="{!v.btnActionAprobar}">
+							<lightning:spinner size="medium" variant="brand" alternativeText="-" />
+						</aura:if>
+					</button>
+                	<aura:set attribute="else">
+				<button disabled="{!v.btnInactive}" class="slds-button slds-button_icon slds-button_icon-border-filled button-size" onclick="{!c.aprobarADV}">
+					<lightning:icon iconName="utility:success" title="Aprobar" class="finish-button" />
+					<aura:if isTrue="{!v.btnActionAprobar}">
+						<lightning:spinner size="medium" variant="brand" alternativeText="-" />
+					</aura:if>
+				</button>
+                    </aura:set>
+                </aura:if> 
+				<button class="slds-button slds-button_icon slds-button_icon-border-filled button-size" onclick="{!c.rechazarADV}">
+					<lightning:icon iconName="utility:clear" title="Rechazar" class="send-button" />
+					<aura:if isTrue="{!v.btnActionRechazar}">
+						<lightning:spinner size="medium" variant="brand" alternativeText="-" />
+					</aura:if>
+				</button>
+				<button disabled="{!v.isXML}" class="slds-button slds-button_icon slds-button_icon-border-filled button-size" onclick="{!c.generaXML}">
+					<lightning:icon iconName="utility:share_file" title="Generar XMLs" class="finish-button" />
+					<aura:if isTrue="{!v.btnActionXML}">
+						<lightning:spinner size="medium" variant="brand" alternativeText="-" />
+					</aura:if>
+				</button>
+				<!--<button class="slds-button slds-button_icon slds-button_icon-border-filled button-size" onclick="{!c.generaPDF}">
+						<lightning:icon iconName="utility:preview" title="GENERAR PDF PRUEBA" class="finish-button"/>
+				</button>-->
+			</lightning:buttonGroup>
+		</div>
+		<aura:if isTrue="{!v.modalErrores}">
+			<div style="width:100%;">
+				<section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+					aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+					<div class="slds-modal__container" style="width:100%;">
+						<header class="slds-modal__header">
+							<center>
+								<div name="titulo" class="titulo" style="display:inline-block;">
+									<lightning:icon size="small" iconName="utility:info"
+										style="display:inline-block;margin-right:4px;" />Información de Errores
+								</div>
+							</center>
+						</header>
+						<div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+							<c:ManejoErroresAltaCliente_CMP info="{!v.listaErrores}" />
+						</div>
+						<footer class="slds-modal__footer">
+							<center>
+								<button class="slds-button slds-button_neutral"
+									onclick="{!c.ocultarMostrar}">Cerrar</button>
+							</center>
+						</footer>
+					</div>
+				</section>
+				<div class="slds-backdrop slds-backdrop_open">
+				</div>
+			</div>
+		</aura:if>
+    </div>
+</aura:component>
